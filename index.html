@@ -80,10 +80,10 @@
   @keyframes float{50%{translate:0 -5px}}
   body.done .pinbtn:hover::after{opacity:1;filter:blur(14px)}
   body.done .pinbtn:hover svg{animation:wobble 1s}
-  body.done .rack{top:36%}
+  body.done .rack{top:32%}
   @media(max-width:760px){.rack{top:18%;gap:8px}.rack .row{gap:6px;flex-wrap:wrap}.pinbtn{padding:8px 10px;font-size:9px}}
 
-  .headline{position:absolute;left:0;right:0;bottom:7vh;z-index:5;text-align:center;opacity:0;transform:translateY(20px);transition:opacity 1s,transform 1s}
+  .headline{position:absolute;left:0;right:0;bottom:4vh;z-index:5;text-align:center;opacity:0;transform:translateY(20px);transition:opacity 1s,transform 1s}
   body.done .headline{opacity:1;transform:none}
   .headline h1{font-family:Orbitron;font-weight:900;font-size:clamp(30px,5.5vw,76px);line-height:1;text-shadow:0 4px 30px rgba(0,0,0,.6)}
   .headline h1 .x{color:var(--strike-red);text-shadow:0 0 18px var(--strike-red)}
@@ -211,6 +211,32 @@
   .pinbtn.hot::before{opacity:1}
   .pinbtn.hot{color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 26px 40px -12px var(--glow),0 0 0 1px var(--glow)}
   .pinbtn.hot::after{opacity:1;filter:blur(18px);transform:scaleX(1.25)}
+
+  /* ===== 8. NOW BOWLING + SCOREBOARD ===== */
+  #nowbowling{position:absolute;left:5vw;top:88px;z-index:7;opacity:0;transition:opacity .8s;font-family:Orbitron;font-size:clamp(11px,1.1vw,14px);letter-spacing:.35em;color:#cfe9ff;margin-bottom:12px;padding:8px 18px;border-radius:10px;
+    background:rgba(3,10,30,.65);border:1px solid rgba(0,229,255,.45);box-shadow:0 0 22px rgba(0,229,255,.35),inset 0 0 18px rgba(0,229,255,.12);
+    background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px)}
+  body.done #nowbowling{opacity:1}
+  #nowbowling b{color:var(--lane-blue);text-shadow:0 0 12px var(--lane-blue);margin-left:10px}
+  #nowbowling.flash{animation:nbflash .9s}
+  @keyframes nbflash{0%,40%,80%{box-shadow:0 0 50px rgba(255,45,85,.9);border-color:var(--strike-red)}20%,60%,100%{box-shadow:0 0 22px rgba(0,229,255,.35)}}
+  #nameForm{display:flex;justify-content:center;gap:8px;margin-top:14px}
+  #nameForm input{width:min(260px,52vw);font-family:Poppins;font-size:13px;color:#fff;background:rgba(3,10,30,.6);border:1px solid rgba(255,255,255,.18);border-radius:24px;padding:9px 16px;outline:none}
+  #nameForm input:focus{border-color:var(--lane-blue);box-shadow:0 0 16px rgba(0,229,255,.4)}
+  #nameForm button{font-family:Orbitron;font-size:11px;letter-spacing:.18em;color:#fff;background:linear-gradient(180deg,#2a2e36,#16191f);border:1px solid rgba(255,45,85,.6);border-radius:24px;padding:9px 16px;cursor:pointer;box-shadow:0 10px 22px -10px rgba(255,45,85,.8)}
+  .scoreboard{max-width:1100px}
+  .sb{display:grid;grid-template-columns:140px repeat(10,1fr);border:1px solid rgba(0,229,255,.35);border-radius:16px;overflow:hidden;background:rgba(3,10,30,.7);box-shadow:0 0 40px rgba(0,229,255,.15)}
+  .sb div{border-left:1px solid rgba(0,229,255,.2);text-align:center;font-family:Orbitron}
+  .sb .who{border-left:none;display:flex;align-items:center;justify-content:center;font-size:13px;letter-spacing:.15em;color:var(--lane-blue);padding:10px}
+  .sb .hd{font-size:10px;letter-spacing:.2em;color:#8fa3bb;padding:8px 0;border-bottom:1px solid rgba(0,229,255,.2)}
+  .sb .fr{padding:14px 0 10px}
+  .sb .fr .m{display:block;font-size:clamp(16px,2vw,26px);font-weight:900;color:var(--strike-red);text-shadow:0 0 12px var(--strike-red);opacity:0;transform:scale(2);transition:all .35s cubic-bezier(.2,1.5,.4,1)}
+  .sb .fr .t{display:block;font-size:clamp(11px,1.2vw,15px);color:#e8f4ff;margin-top:6px;opacity:0;transition:opacity .3s .15s}
+  .sb .fr.on .m,.sb .fr.on .t{opacity:1;transform:none}
+  .sb .fr.on{background:rgba(255,45,85,.06)}
+  .perfect{margin-top:18px;font-family:Orbitron;letter-spacing:.3em;color:var(--strike-red);text-shadow:0 0 16px var(--strike-red);opacity:0;transition:opacity .6s}
+  .perfect.on{opacity:1}
+  @media(max-width:760px){.sb{grid-template-columns:repeat(5,1fr)}.sb .who,.sb .hd.h0{display:none}}
 </style>
 </head>
 <body>
@@ -222,7 +248,7 @@
     <svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>
     TWISTED <b>PIN</b>
   </a>
-  <div class="right"><nav><a href="#bowl">Bowl</a><a href="#plan">Plan Your Night</a><a href="#yourturn">Your Turn</a><a href="#more">Between Frames</a><a href="#visit">Visit</a></nav>
+  <div class="right"><nav><a href="#score">Score</a><a href="#bowl">Bowl</a><a href="#plan">Plan Your Night</a><a href="#yourturn">Your Turn</a><a href="#more">Between Frames</a><a href="#visit">Visit</a></nav>
   <button id="sound" aria-label="Turn music on or off"><span class="eq"><i></i><i></i><i></i><i></i></span><span class="lbl">SOUND ON</span></button></div>
   <audio id="music" src="music.mp3" loop preload="auto"></audio>
 </header>
@@ -235,6 +261,9 @@
   <video id="v1" src="throw.mp4" muted playsinline preload="auto"></video>
   <video id="v2" src="impact.mp4" muted playsinline preload="auto"></video>
   <video id="v3" src="turn.mp4" muted playsinline preload="auto"></video>
+  <video id="v4" src="hang.mp4" muted playsinline preload="none"></video>
+  <video id="v5" src="next.mp4" muted playsinline preload="none"></video>
+  <video id="v6" src="talk.mp4" muted playsinline preload="none"></video>
   </div>
   <canvas id="dust"></canvas>
 
@@ -255,8 +284,10 @@
   <div class="headline">
     <h1>FUTURISTIC <span class="x">BOWLING</span></h1>
     <div class="row"><a class="btn" href="https://www.twistedpin.com/" target="_blank" rel="noopener">BOOK A LANE</a><a class="btn ghost" href="tel:+18157827790">CALL (815) 782-7790</a></div>
+    <form id="nameForm" autocomplete="off"><input id="nameIn" maxlength="14" placeholder="Put your name on the wall"><button>ROLL IT</button></form>
   </div>
 
+  <div id="nowbowling">NOW BOWLING <b id="nbName">YOU</b></div>
   <button id="prompt">TAP TO ENTER THE LANES</button>
   <button id="skip">SKIP INTRO</button>
 </section>
@@ -278,6 +309,14 @@
     <div><b data-count="17">0</b><span>TRADITIONAL LANES</span></div>
     <div><b>+1</b><span>SEMI-PRIVATE VIP SUITE</span></div>
     <div><b data-count="4.1" data-dec="1">0</b><span>YELP RATING</span></div>
+  </section>
+
+  <section class="scoreboard" id="score">
+    <div class="reveal"><div class="eyebrow">THE SCOREBOARD</div>
+    <h2>Ten frames. <em>Twelve strikes.</em></h2>
+    <p class="sub">Scroll in and watch your perfect game light up.</p></div>
+    <div class="sb reveal"><div class="hd h0">BOWLER</div><div class="hd">1</div><div class="hd">2</div><div class="hd">3</div><div class="hd">4</div><div class="hd">5</div><div class="hd">6</div><div class="hd">7</div><div class="hd">8</div><div class="hd">9</div><div class="hd">10</div><div class="who" id="sbName">YOU</div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div></div>
+    <p class="perfect">300 · PERFECT GAME</p>
   </section>
 
   <section id="bowl">
@@ -383,7 +422,12 @@ document.querySelectorAll('.pinbtn').forEach((b,i) => {
   b.style.setProperty('--fd', r(3.4,6.2).toFixed(2)+'s'); b.style.setProperty('--amp', r(5,12).toFixed(1)+'px'); b.style.setProperty('--ax', r(-4,4).toFixed(1)+'px');
 });
 function strike(){ B.classList.add('x'); setTimeout(() => B.classList.add('menu'), MENU_AFTER*1000); }
-function finish(){ if (!xShown){ xShown = true; strike(); } show(banner); B.classList.add('small-x','menu','done','rolling'); }
+function finish(){ if (!xShown){ xShown = true; strike(); } show(banner); B.classList.add('small-x','menu','done','rolling'); setTimeout(musicOut, 4500); }
+/* after the pins land, the music slowly fades out so visitors can explore in peace (SOUND ON brings it back) */
+let outTimer;
+function musicOut(){ if (typeof music === 'undefined' || music.paused) return; clearInterval(outTimer); const v0 = music.volume, t0 = performance.now(), dur = 7000;
+  outTimer = setInterval(() => { if (music.paused){ clearInterval(outTimer); return; } const k = Math.min(1,(performance.now()-t0)/dur); music.volume = v0*(1-k)*(1-k);
+    if (k >= 1){ clearInterval(outTimer); music.pause(); B.classList.remove('playing'); lbl.textContent = 'SOUND ON'; } }, 50); }
 
 document.getElementById('prompt').onclick = start;
 document.getElementById('cinema').addEventListener('click', e => { if (!e.target.closest('a,button')) start(); });
@@ -464,7 +508,7 @@ v3.addEventListener('play', () => sfxFile('cheer', .9));
 const _strike = strike;
 strike = function(){ clubDrop(); sfxFile('crash', 1); sfxThud(1, 60); const c=document.getElementById('cinema'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
   document.querySelectorAll('.pinbtn').forEach((b,i) => { const d=i*0.22+MENU_AFTER; setTimeout(()=>sfxWhoosh(.18), d*1000); setTimeout(()=>sfxThud(.55, 70+i*6), (d+.88)*1000); });
-  if (!music.paused) fadeTo(.35); setTimeout(()=>{ if (!music.paused) fadeTo(.6); }, 6000);
+  if (!music.paused) fadeTo(.35); 
   _strike(); };
 
 /* ===== SOUND: the club track ===== */
@@ -477,7 +521,7 @@ function wireMusic(){ if (lp || !ac) return; try { const src = ac.createMediaEle
 function clubBuild(sec){ if (!lp) return; const t = ac.currentTime; lp.frequency.cancelScheduledValues(t); lp.frequency.setValueAtTime(220,t);
   lp.frequency.exponentialRampToValueAtTime(900,t+sec*.55); lp.frequency.exponentialRampToValueAtTime(20000,t+sec); }
 function clubDrop(){ if (!lp) return; const t = ac.currentTime; lp.frequency.cancelScheduledValues(t); lp.frequency.setValueAtTime(20000,t); }
-function soundOn(){ audioInit(); wireMusic(); if (B.classList.contains('done') || !v1.paused && v1.currentTime > 0 && !started) clubDrop(); else if (B.classList.contains('rolling') && !v1.paused) clubBuild(Math.max(2,(v1.duration||10)-v1.currentTime+IMPACT_AT)); music.volume = 0; const p = music.play(); if (p) p.then(() => { fadeTo(.6); B.classList.add('playing'); lbl.textContent = 'SOUND OFF'; }).catch(()=>{}); }
+function soundOn(){ clearInterval(outTimer); audioInit(); wireMusic(); if (B.classList.contains('done') || !v1.paused && v1.currentTime > 0 && !started) clubDrop(); else if (B.classList.contains('rolling') && !v1.paused) clubBuild(Math.max(2,(v1.duration||10)-v1.currentTime+IMPACT_AT)); music.volume = 0; const p = music.play(); if (p) p.then(() => { fadeTo(.6); B.classList.add('playing'); lbl.textContent = 'SOUND OFF'; }).catch(()=>{}); }
 function soundOff(){ fadeTo(0); B.classList.remove('playing'); lbl.textContent = 'SOUND ON'; }
 sbtn.addEventListener('click', e => { e.stopPropagation(); wantSound = !B.classList.contains('playing'); wantSound ? soundOn() : soundOff(); });
 ['pointerdown','keydown','touchstart'].forEach(ev => addEventListener(ev, function first(e){
@@ -533,6 +577,41 @@ document.addEventListener('pointerover', e => { const el = e.target.closest('a:n
 let lastX = 0, lastY = 0, lastT = 0, lastW = 0;
 addEventListener('pointermove', e => { const t = performance.now(), dt = t-lastT; if (dt > 16){ const v = Math.hypot(e.clientX-lastX, e.clientY-lastY)/dt;
   if (v > 2.6 && t-lastW > 450){ lastW = t; sfxWhoosh(.06); } lastX = e.clientX; lastY = e.clientY; lastT = t; } });
+
+/* ===== THE MOVIE KEEPS GOING: hang out, then the next bowler steps up ===== */
+const v4 = document.getElementById('v4'), v5 = document.getElementById('v5'), v6 = document.getElementById('v6');
+let ambient = false;
+function startAmbient(){ if (ambient || matchMedia('(prefers-reduced-motion: reduce)').matches) return; ambient = true; [v4,v6,v5].forEach(v => v.preload = 'auto'); playAmb(v4); }
+function playAmb(v){ v.currentTime = 0; const p = v.play(); if (p) p.then(() => show(v)).catch(() => { if (v === v6) playAmb(v5); else show(banner); }); }
+// the movie: he sits with the crew -> they laugh and talk -> she steps up next -> rest on the crew still
+v4.addEventListener('ended', () => playAmb(v6));
+v6.addEventListener('ended', () => playAmb(v5));
+v5.addEventListener('ended', () => show(banner));
+[v4,v5].forEach(v => v.addEventListener('error', () => show(banner)));
+v6.addEventListener('error', () => { if (ambient) playAmb(v5); });
+const _finish = finish;
+finish = function(){ _finish(); startAmbient(); };
+v3.addEventListener('ended', () => startAmbient());
+document.getElementById('skip').onclick = () => { [v1,v2,v3].forEach(v=>v.pause()); finish(); };
+document.getElementById('replay').onclick = () => { [v4,v5,v6].forEach(v=>v.pause()); ambient = false;
+  scrollTo({top:0}); B.classList.remove('x','menu','small-x','done','rolling'); started = false; xShown = false; show(poster); setTimeout(start, 600); };
+
+/* ===== NOW BOWLING: your name on the wall ===== */
+function setName(n){ n = (n||'').trim().toUpperCase().slice(0,14); if (!n) return;
+  document.getElementById('nbName').textContent = n; document.getElementById('sbName').textContent = n;
+  const nb = document.getElementById('nowbowling'); nb.classList.remove('flash'); void nb.offsetWidth; nb.classList.add('flash');
+  try { localStorage.setItem('tpName', n); } catch(e){} }
+document.getElementById('nameForm').addEventListener('submit', e => { e.preventDefault(); const v = document.getElementById('nameIn').value; setName(v);
+  if (typeof sfxThud==='function'){ sfxThud(.8,60); sfxWhoosh(.2); } document.getElementById('nameIn').value=''; });
+try { const saved = localStorage.getItem('tpName'); if (saved){ document.getElementById('nbName').textContent = saved; document.getElementById('sbName').textContent = saved; } } catch(e){}
+
+/* ===== SCOREBOARD: a perfect game fills in as it scrolls into view ===== */
+const sio = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; sio.unobserve(e.target);
+  e.target.querySelectorAll('.fr').forEach((f,i) => setTimeout(() => { f.classList.add('on'); f.querySelector('.t').textContent = (i+1)*30;
+    if (i===9) f.querySelector('.m').textContent = 'XXX'; if (typeof sfxThud==='function') sfxThud(.45, 70+i*8); }, 250*i));
+  setTimeout(() => { e.target.parentElement.querySelector('.perfect').classList.add('on'); if (typeof sfxFile==='function') sfxFile('cheer', .5); }, 2700);
+}), {threshold:.5});
+document.querySelectorAll('.sb').forEach(el => sio.observe(el));
 </script>
 </body>
 </html>
