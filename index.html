@@ -237,6 +237,15 @@
   .perfect{margin-top:18px;font-family:Orbitron;letter-spacing:.3em;color:var(--strike-red);text-shadow:0 0 16px var(--strike-red);opacity:0;transition:opacity .6s}
   .perfect.on{opacity:1}
   @media(max-width:760px){.sb{grid-template-columns:repeat(5,1fr)}.sb .who,.sb .hd.h0{display:none}}
+
+  /* ===== 9. THE CREW NEVER LEAVES: the hero scene stays behind the whole page ===== */
+  #cinema .stage{position:fixed;inset:-3%;z-index:0}
+  #cinema{background:transparent}
+  #cinema::after{position:fixed;background:linear-gradient(180deg,rgba(3,7,18,.35),rgba(3,7,18,0) 30%,rgba(3,7,18,0) 70%,rgba(3,7,18,.55))}
+  body{background:#000}
+  main{background:linear-gradient(180deg,rgba(3,7,18,.2),rgba(3,7,18,.5) 14%,rgba(3,7,18,.5))!important}
+  main section{position:relative}
+  .card,.planner .q,.proof div,.sb{backdrop-filter:blur(14px)}
 </style>
 </head>
 <body>
@@ -400,7 +409,7 @@ const v1 = document.getElementById('v1'), v2 = document.getElementById('v2'), v3
 const poster = document.querySelector('.poster'), banner = document.querySelector('.banner'), B = document.body;
 let started = false, xShown = false;
 
-function show(v){ [poster,banner,v1,v2,v3].forEach(el => el.classList.toggle('on', el===v)); }
+function show(v){ document.querySelectorAll('#cinema .stage > img, #cinema .stage > video').forEach(el => el.classList.toggle('on', el===v)); }
 function play(v){ show(v); v.currentTime = 0; const p = v.play(); if (p) p.catch(finish); }
 
 function start(){
@@ -582,13 +591,13 @@ addEventListener('pointermove', e => { const t = performance.now(), dt = t-lastT
 const v4 = document.getElementById('v4'), v5 = document.getElementById('v5'), v6 = document.getElementById('v6');
 let ambient = false;
 function startAmbient(){ if (ambient || matchMedia('(prefers-reduced-motion: reduce)').matches) return; ambient = true; [v4,v6,v5].forEach(v => v.preload = 'auto'); playAmb(v4); }
-function playAmb(v){ v.currentTime = 0; const p = v.play(); if (p) p.then(() => show(v)).catch(() => { if (v === v6) playAmb(v5); else show(banner); }); }
+function playAmb(v){ v.currentTime = 0; const p = v.play(); if (p) p.then(() => show(v)).catch(() => show(banner)); }
 // the movie: he sits with the crew -> they laugh and talk -> she steps up next -> rest on the crew still
+v6.loop = true;
 v4.addEventListener('ended', () => playAmb(v6));
-v6.addEventListener('ended', () => playAmb(v5));
-v5.addEventListener('ended', () => show(banner));
+v5.addEventListener('ended', () => playAmb(v6));
 [v4,v5].forEach(v => v.addEventListener('error', () => show(banner)));
-v6.addEventListener('error', () => { if (ambient) playAmb(v5); });
+v6.addEventListener('error', () => show(banner));
 const _finish = finish;
 finish = function(){ _finish(); startAmbient(); };
 v3.addEventListener('ended', () => startAmbient());
