@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twisted Pin 2030 | Futuristic Bowling</title>
+<meta name="description" content="Concept redesign of the Twisted Pin bowling experience in Plainfield, IL.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  /* ===== 1. BRAND COLORS: change these and the whole site changes ===== */
+  :root{
+    --lane-blue:#00e5ff;
+    --deep-blue:#0047ff;
+    --strike-red:#ff2d55;
+    --pin-white:#f4fbff;
+    --night:#030712;
+    --glass:rgba(8,20,45,.55);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--night);color:var(--pin-white);font-family:Poppins,system-ui,sans-serif}
+
+  /* ===== 2. THE CINEMA: three Higgsfield clips play in order ===== */
+  #cinema{position:relative;height:100vh;overflow:hidden;background:#000}
+  #cinema video,#cinema .poster,#cinema .banner{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s}
+  #cinema video.on,#cinema .poster.on,#cinema .banner.on{opacity:1}
+  #cinema .banner{transition:opacity 1.4s}
+  #cinema .banner.on{animation:drift 14s ease-out forwards}
+  @keyframes drift{from{transform:scale(1.08)}to{transform:scale(1)}}
+  #cinema::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,7,18,.35),rgba(3,7,18,0) 30%,rgba(3,7,18,0) 70%,rgba(3,7,18,.9));pointer-events:none}
+
+  #prompt{position:absolute;left:50%;bottom:9vh;transform:translateX(-50%);z-index:6;font-family:Orbitron;letter-spacing:.35em;
+    font-size:clamp(12px,1.6vw,16px);color:var(--lane-blue);text-shadow:0 0 12px var(--lane-blue);animation:pulse 1.4s infinite;cursor:pointer;background:none;border:none}
+  @keyframes pulse{50%{opacity:.35}}
+  body.rolling #prompt{display:none}
+  #skip{position:absolute;right:22px;top:88px;z-index:7;background:rgba(3,7,18,.4);border:1px solid rgba(0,229,255,.4);color:var(--lane-blue);
+    font-family:Orbitron;font-size:11px;letter-spacing:.2em;padding:8px 14px;border-radius:30px;cursor:pointer}
+  body.done #skip{display:none}
+
+  /* the big neon X (built in code so it stays sharp) */
+  #strike{position:absolute;left:50%;top:50%;display:flex;flex-direction:column;align-items:center;gap:1vh;transform:translate(-50%,-50%) scale(.4);z-index:4;opacity:0;pointer-events:none;text-align:center;transition:transform .5s cubic-bezier(.2,1.6,.4,1),opacity .3s}
+  #strike svg{width:min(62vw,50vh);height:min(62vw,50vh);overflow:visible;display:block}
+  #strike svg path{fill:none;stroke-linecap:round;stroke-dasharray:600;stroke-dashoffset:600}
+  #strike .glow{stroke:var(--strike-red);stroke-width:52;filter:drop-shadow(0 0 24px var(--strike-red)) drop-shadow(0 0 60px var(--strike-red))}
+  #strike .core{stroke:#fff;stroke-width:16;filter:drop-shadow(0 0 10px #fff)}
+  #strike .word{font-family:Orbitron;font-weight:900;font-size:clamp(36px,min(8vw,11vh),110px);line-height:1;padding:.15em .5em .1em .7em;border-radius:18px;background:radial-gradient(ellipse at center,rgba(3,7,18,.75),rgba(3,7,18,0) 70%);letter-spacing:.25em;color:#fff;text-shadow:0 0 18px var(--strike-red),0 0 40px var(--strike-red);opacity:0;transition:opacity .3s .25s}
+  body.x #strike{opacity:1;transform:translate(-50%,-50%) scale(1);animation:slam .55s cubic-bezier(.2,1.4,.35,1) both}
+  @keyframes slam{0%{transform:translate(-50%,-50%) scale(2.6);opacity:0}55%{transform:translate(-50%,-50%) scale(.93);opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
+  #flash{position:absolute;inset:0;z-index:4;background:#fff;opacity:0;pointer-events:none}
+  body.x #flash{animation:flash .6s ease-out}
+  @keyframes flash{0%{opacity:.75}100%{opacity:0}}
+  #cinema.shake{animation:shake .5s}
+  @keyframes shake{10%,50%,90%{transform:translate(-6px,3px)}30%,70%{transform:translate(6px,-3px)}}
+  body.x #strike path{animation:draw .3s forwards}
+  body.x #strike path.b{animation-delay:.12s}
+  body.x #strike .word{opacity:1}
+  body.small-x #strike{top:16%;transform:translate(-50%,-50%) scale(.38)}
+  body.done #strike{opacity:0}
+  @keyframes draw{to{stroke-dashoffset:0}}
+
+  /* ===== THE 10 PINS BECOME 10 BUTTONS (racked like real pins) ===== */
+  .rack{position:absolute;left:50%;top:24%;transform:translateX(-50%);z-index:5;display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:none}
+  .rack .row{display:flex;gap:12px;justify-content:center}
+  /* the buttons: dark gray, light gray type, a soft neon glow underneath (blue, red or white) */
+  .pinbtn{--glow:rgba(0,229,255,.6);position:relative;pointer-events:auto;display:flex;align-items:center;gap:9px;font-family:Orbitron;font-size:clamp(10px,1vw,13px);
+    letter-spacing:.16em;color:#d3d9e2;text-decoration:none;padding:11px 18px 11px 13px;border-radius:30px;
+    background:linear-gradient(180deg,#2a2e36,#16191f);border:1px solid rgba(255,255,255,.09);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 26px -10px var(--glow);white-space:nowrap;opacity:0;
+    transition:transform .3s,color .3s,box-shadow .3s}
+  .pinbtn::after{content:"";position:absolute;left:14%;right:14%;bottom:-10px;height:12px;border-radius:50%;background:var(--glow);filter:blur(10px);opacity:.75;z-index:-1;transition:opacity .3s,filter .3s}
+  .pinbtn svg{width:11px;height:20px;flex:none;opacity:.9}
+  .pinbtn.red{--glow:rgba(255,45,85,.6)}
+  .pinbtn.white{--glow:rgba(235,245,255,.5)}
+  .pinbtn.main{font-size:clamp(11px,1.15vw,15px);color:#fff;padding:14px 24px 14px 16px;border-color:rgba(0,229,255,.35)}
+  .pinbtn.main svg{width:13px;height:23px}
+  body.menu .pinbtn{opacity:1;animation:land 1.3s cubic-bezier(.22,.9,.3,1) var(--d) backwards,float 4.5s ease-in-out calc(var(--d) + 1.4s) infinite}
+  @keyframes land{0%{opacity:0;transform:translate(var(--fx),var(--fy)) rotate(var(--fr)) scale(.3)}68%{opacity:1;transform:translate(0,-16px) rotate(0) scale(1.12)}80%{transform:translate(0,5px) scale(.94)}90%{transform:translate(0,-2px) scale(1.02)}100%{opacity:1;transform:none}}
+  /* once landed: a slow hover-float, like they are levitating over the lane */
+  @keyframes float{50%{translate:0 -5px}}
+  body.done .pinbtn:hover::after{opacity:1;filter:blur(14px)}
+  body.done .pinbtn:hover svg{animation:wobble 1s}
+  body.done .rack{top:32%}
+  @media(max-width:760px){.rack{top:18%;gap:8px}.rack .row{gap:6px;flex-wrap:wrap}.pinbtn{padding:8px 10px;font-size:9px}}
+
+  .headline{position:absolute;left:0;right:0;bottom:4vh;z-index:5;text-align:center;opacity:0;transform:translateY(20px);transition:opacity 1s,transform 1s}
+  body.done .headline{opacity:1;transform:none}
+  .headline h1{font-family:Orbitron;font-weight:900;font-size:clamp(30px,5.5vw,76px);line-height:1;text-shadow:0 4px 30px rgba(0,0,0,.6)}
+  .headline h1 .x{color:var(--strike-red);text-shadow:0 0 18px var(--strike-red)}
+  .headline .row{justify-content:center;margin-top:24px}
+
+  header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:18px 5vw;
+    background:linear-gradient(180deg,rgba(3,7,18,.7),rgba(3,7,18,0));z-index:10}
+  .logo{display:flex;align-items:center;gap:10px;font-family:Orbitron;font-weight:900;letter-spacing:.12em;font-size:18px;text-decoration:none;color:var(--pin-white)}
+  .logo svg{width:22px;height:34px;transform-origin:50% 100%;animation:wobble 3.2s ease-in-out infinite}
+  .logo b{color:var(--lane-blue);text-shadow:0 0 10px var(--lane-blue)}
+  @keyframes wobble{0%,60%,100%{transform:rotate(0)}66%{transform:rotate(-14deg)}72%{transform:rotate(11deg)}78%{transform:rotate(-7deg)}84%{transform:rotate(4deg)}90%{transform:rotate(-2deg)}}
+  nav a{color:var(--pin-white);opacity:.85;text-decoration:none;margin-left:26px;font-size:14px}
+  nav a:hover{opacity:1;color:var(--lane-blue)}
+  .btn{display:inline-block;font-family:Orbitron;font-size:13px;letter-spacing:.15em;padding:14px 26px;border-radius:40px;text-decoration:none;
+    color:var(--night);background:var(--lane-blue);box-shadow:0 0 24px rgba(0,229,255,.6);transition:transform .2s}
+  .btn:hover{transform:translateY(-2px) scale(1.03)}
+  .btn.ghost{background:rgba(3,7,18,.4);color:var(--pin-white);border:1px solid rgba(255,255,255,.4);box-shadow:none}
+
+  /* ===== 3. THE SITE ===== */
+  main{position:relative;background:radial-gradient(ellipse at top,#071a3a,var(--night) 60%)}
+  section{padding:110px 6vw;max-width:1200px;margin:0 auto}
+  .eyebrow{font-family:Orbitron;letter-spacing:.4em;font-size:12px;color:var(--lane-blue);margin-bottom:18px}
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  h2{font-family:Orbitron;font-size:clamp(28px,4vw,48px);margin-bottom:14px}
+  h2 em{font-style:normal;color:var(--lane-blue)}
+  .sub{opacity:.75;max-width:640px;margin-bottom:46px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+  .card{background:var(--glass);border:1px solid rgba(0,229,255,.18);border-radius:22px;padding:30px 26px;backdrop-filter:blur(10px);transition:transform .3s,border-color .3s,box-shadow .3s}
+  .card:hover{transform:translateY(-6px);border-color:var(--lane-blue);box-shadow:0 0 40px rgba(0,229,255,.25)}
+  .card .ico{font-size:30px;margin-bottom:14px}
+  .card h3{font-family:Orbitron;font-size:17px;letter-spacing:.06em;margin-bottom:10px}
+  .card p{font-size:14px;opacity:.78;line-height:1.6}
+  .card.red{border-color:rgba(255,45,85,.35)}
+  .card.red:hover{border-color:var(--strike-red);box-shadow:0 0 40px rgba(255,45,85,.3)}
+  .visit{display:grid;grid-template-columns:1.2fr 1fr;gap:30px;align-items:center}
+  .visit .card{padding:40px}
+  .big{font-family:Orbitron;font-size:clamp(22px,3vw,34px);line-height:1.3}
+  footer{text-align:center;padding:60px 6vw 80px;opacity:.65;font-size:13px}
+  footer .tag{font-family:Orbitron;font-size:26px;color:var(--lane-blue);opacity:1;margin-bottom:14px;text-shadow:0 0 14px var(--lane-blue)}
+  #replay{background:none;border:none;color:var(--strike-red);font-family:Orbitron;letter-spacing:.2em;cursor:pointer;margin-top:18px;font-size:12px}
+  @media(max-width:760px){nav{display:none}.visit{grid-template-columns:1fr}.pop{top:auto;bottom:22vh;transform:none}.pop a{padding:10px 14px}}
+
+  /* ===== 4. IMMERSION LAYER: parallax, light dust, glowing cursor, scroll lane ===== */
+  #cinema .stage{position:absolute;inset:-3%;transform:translate(calc(var(--mx,0)*-18px),calc(var(--my,0)*-12px)) scale(1.02);transition:transform .25s ease-out}
+  #dust{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;mix-blend-mode:screen}
+  .rack{translate:calc(var(--mx,0)*14px) calc(var(--my,0)*10px);transition:translate .25s ease-out}
+  .headline{translate:calc(var(--mx,0)*8px) 0}
+  #orb{position:fixed;left:0;top:0;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;pointer-events:none;z-index:50;
+    background:radial-gradient(circle at 35% 35%,#fff,#7ff3ff 35%,#0a6cff 70%,transparent 72%);box-shadow:0 0 18px #00e5ff,0 0 40px rgba(0,229,255,.5);transition:width .2s,height .2s,margin .2s}
+  #orb.big{width:42px;height:42px;margin:-21px 0 0 -21px;background:radial-gradient(circle,rgba(255,45,85,.25),transparent 70%);box-shadow:0 0 0 1px rgba(255,45,85,.8),0 0 30px rgba(255,45,85,.6)}
+  #trail{position:fixed;inset:0;pointer-events:none;z-index:49}
+  @media(pointer:coarse){#orb,#trail{display:none}}
+  #gutter{position:fixed;left:18px;top:15vh;bottom:15vh;width:3px;border-radius:3px;background:rgba(0,229,255,.12);z-index:9;box-shadow:0 0 12px rgba(0,229,255,.15)}
+  #gutter i{position:absolute;left:50%;width:14px;height:14px;margin-left:-7px;border-radius:50%;top:var(--p,0%);
+    background:radial-gradient(circle at 35% 35%,#fff,#7ff3ff 30%,#0a6cff 70%);box-shadow:0 0 16px #00e5ff;transform:translateY(-50%)}
+  #gutter b{position:absolute;left:0;top:0;width:100%;height:var(--p,0%);background:linear-gradient(#00e5ff,#ff2d55);box-shadow:0 0 10px #00e5ff}
+  @media(max-width:760px){#gutter{display:none}}
+  /* sections arrive out of the dark with a light sweep */
+  .reveal{opacity:0;transform:translateY(50px);filter:blur(8px);transition:opacity 1s,transform 1.1s cubic-bezier(.2,.8,.2,1),filter 1s}
+  .reveal.in{opacity:1;transform:none;filter:none}
+  .reveal.in h2{background:linear-gradient(100deg,#f4fbff 40%,#00e5ff 50%,#f4fbff 60%) 0 0/250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sweep 2.2s ease-out .3s both}
+  .reveal.in h2 em{color:var(--lane-blue);-webkit-text-fill-color:var(--lane-blue)}
+  @keyframes sweep{from{background-position:100% 0}to{background-position:0 0}}
+  /* cards tilt toward you and glow where your cursor is */
+  .card{transform-style:preserve-3d;will-change:transform;background-image:radial-gradient(400px circle at var(--gx,50%) var(--gy,50%),rgba(0,229,255,.12),transparent 40%)}
+  .card.red{background-image:radial-gradient(400px circle at var(--gx,50%) var(--gy,50%),rgba(255,45,85,.14),transparent 40%)}
+  /* full-bleed cinematic panels */
+  .panel{position:relative;min-height:90vh;max-width:none;display:flex;align-items:flex-end;padding:0 6vw 12vh;overflow:hidden}
+  .panel img{position:absolute;inset:-8% 0;width:100%;height:116%;object-fit:cover;transform:translateY(var(--py,0px));z-index:0}
+  .panel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,var(--night) 0%,rgba(3,7,18,.1) 30%,rgba(3,7,18,.2) 60%,var(--night) 100%);z-index:1}
+  .panel .copy{position:relative;z-index:2;max-width:720px}
+  .panel h2{font-size:clamp(34px,5.5vw,72px);line-height:1.02}
+  .yourturn{max-width:1300px}
+  .yourturn .frame{position:relative;height:72vh;border-radius:26px;overflow:hidden;border:1px solid rgba(0,229,255,.3);box-shadow:0 0 60px rgba(0,229,255,.18),inset 0 0 0 1px rgba(255,255,255,.04)}
+  .yourturn iframe{width:100%;height:100%;border:0;display:block}
+
+  /* ===== 5. SOUND: club track starts on your first tap (browsers block sound before that) ===== */
+  #sound{display:flex;align-items:center;gap:8px;margin-left:26px;background:rgba(3,7,18,.4);border:1px solid rgba(0,229,255,.4);color:var(--lane-blue);
+    font-family:Orbitron;font-size:10px;letter-spacing:.2em;padding:8px 14px;border-radius:30px;cursor:pointer}
+  #sound .eq{display:flex;gap:2px;align-items:flex-end;height:12px}
+  #sound .eq i{width:2px;height:3px;background:var(--lane-blue);box-shadow:0 0 6px var(--lane-blue)}
+  body.playing #sound .eq i{animation:eq .5s ease-in-out infinite alternate}
+  body.playing #sound .eq i:nth-child(2){animation-delay:.15s}body.playing #sound .eq i:nth-child(3){animation-delay:.3s}body.playing #sound .eq i:nth-child(4){animation-delay:.08s}
+  @keyframes eq{to{height:12px}}
+  header .right{display:flex;align-items:center}
+
+  /* ===== 6. PROOF STRIP, PLANNER, CITY CHIPS ===== */
+  a.card{display:block;color:inherit;text-decoration:none}
+  .card .go{display:inline-block;margin-top:16px;font-family:Orbitron;font-size:11px;letter-spacing:.2em;color:var(--lane-blue)}
+  .card.red .go{color:var(--strike-red)}
+  .proof{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding-top:60px;padding-bottom:20px}
+  .proof div{text-align:center;padding:26px 10px;border-radius:20px;background:linear-gradient(180deg,#1d2129,#11141a);border:1px solid rgba(255,255,255,.07);box-shadow:0 14px 30px -14px rgba(0,229,255,.5)}
+  .proof b{display:block;font-family:Orbitron;font-size:clamp(30px,4vw,48px);color:#fff;text-shadow:0 0 18px rgba(0,229,255,.7)}
+  .proof span{font-family:Orbitron;font-size:10px;letter-spacing:.2em;color:#aeb7c4}
+  .proof i{font-style:normal}
+  .planner{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+  .planner .q{background:var(--glass);border:1px solid rgba(0,229,255,.18);border-radius:22px;padding:26px}
+  .planner .lab{font-family:Orbitron;font-size:11px;letter-spacing:.3em;color:var(--lane-blue);margin-bottom:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chips button{font-family:Poppins;font-size:14px;color:#d3d9e2;background:linear-gradient(180deg,#2a2e36,#16191f);border:1px solid rgba(255,255,255,.1);border-radius:30px;padding:10px 18px;cursor:pointer;transition:all .25s}
+  .chips button:hover{transform:translateY(-2px);box-shadow:0 10px 22px -10px rgba(0,229,255,.7)}
+  .chips button.on{color:#030712;background:var(--lane-blue);box-shadow:0 0 22px rgba(0,229,255,.6)}
+  .planner .result{grid-column:1/-1;text-align:center;padding:36px;border-radius:24px;background:radial-gradient(ellipse at top,rgba(255,45,85,.18),rgba(8,20,45,.6));border:1px solid rgba(255,45,85,.35)}
+  .planner .result h3{font-family:Orbitron;font-size:clamp(20px,2.6vw,30px);margin:6px 0 10px}
+  .planner .result p{opacity:.85;max-width:620px;margin:0 auto 22px}
+  .planner .result.pop{animation:pop .5s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.02)}100%{transform:none}}
+  .cities{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 26px}
+  .cities span{font-size:12px;letter-spacing:.08em;padding:6px 12px;border-radius:20px;border:1px solid rgba(0,229,255,.25);color:#c9d6e6}
+  @media(max-width:760px){.proof{grid-template-columns:1fr 1fr}.planner{grid-template-columns:1fr}}
+
+  /* ===== 7. 3D PIN RACK: each button floats on its own, glows on its own, leans toward you ===== */
+  .rack{perspective:1100px;gap:20px}
+  .rack .row{gap:22px;transform-style:preserve-3d}
+  .rack .row:nth-child(1){transform:translateZ(-70px) scale(.94);filter:brightness(.92)}
+  .rack .row:nth-child(2){transform:translateZ(-35px) scale(.97)}
+  .rack .row:nth-child(4){transform:translateZ(40px)}
+  body.menu .pinbtn{animation:land 1.3s cubic-bezier(.22,.9,.3,1) var(--d) backwards,float var(--fd,4.5s) ease-in-out calc(var(--d) + 1.4s) infinite}
+  @keyframes float{0%,100%{translate:0 0}50%{translate:var(--ax,0px) calc(var(--amp,6px)*-1)}}
+  .pinbtn{will-change:transform;transform-style:preserve-3d}
+  .pinbtn::after{left:6%;right:6%;bottom:-16px;height:18px;filter:blur(14px);opacity:.8;animation:glowpulse var(--fd,4.5s) ease-in-out infinite;animation-delay:var(--d)}
+  @keyframes glowpulse{0%,100%{opacity:.55;transform:scaleX(.85)}50%{opacity:.95;transform:scaleX(1.08)}}
+  .pinbtn::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;
+    background:radial-gradient(120px circle at var(--hx,50%) var(--hy,50%),rgba(255,255,255,.22),transparent 60%)}
+  .pinbtn.hot::before{opacity:1}
+  .pinbtn.hot{color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 26px 40px -12px var(--glow),0 0 0 1px var(--glow)}
+  .pinbtn.hot::after{opacity:1;filter:blur(18px);transform:scaleX(1.25)}
+
+  /* ===== 8. NOW BOWLING + SCOREBOARD ===== */
+  #nowbowling{position:absolute;left:5vw;top:88px;z-index:7;opacity:0;transition:opacity .8s;font-family:Orbitron;font-size:clamp(11px,1.1vw,14px);letter-spacing:.35em;color:#cfe9ff;margin-bottom:12px;padding:8px 18px;border-radius:10px;
+    background:rgba(3,10,30,.65);border:1px solid rgba(0,229,255,.45);box-shadow:0 0 22px rgba(0,229,255,.35),inset 0 0 18px rgba(0,229,255,.12);
+    background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px)}
+  body.done #nowbowling{opacity:1}
+  #nowbowling b{color:var(--lane-blue);text-shadow:0 0 12px var(--lane-blue);margin-left:10px}
+  #nowbowling.flash{animation:nbflash .9s}
+  @keyframes nbflash{0%,40%,80%{box-shadow:0 0 50px rgba(255,45,85,.9);border-color:var(--strike-red)}20%,60%,100%{box-shadow:0 0 22px rgba(0,229,255,.35)}}
+  #nameForm{display:flex;justify-content:center;gap:8px;margin-top:14px}
+  #nameForm input{width:min(260px,52vw);font-family:Poppins;font-size:13px;color:#fff;background:rgba(3,10,30,.6);border:1px solid rgba(255,255,255,.18);border-radius:24px;padding:9px 16px;outline:none}
+  #nameForm input:focus{border-color:var(--lane-blue);box-shadow:0 0 16px rgba(0,229,255,.4)}
+  #nameForm button{font-family:Orbitron;font-size:11px;letter-spacing:.18em;color:#fff;background:linear-gradient(180deg,#2a2e36,#16191f);border:1px solid rgba(255,45,85,.6);border-radius:24px;padding:9px 16px;cursor:pointer;box-shadow:0 10px 22px -10px rgba(255,45,85,.8)}
+  .scoreboard{max-width:1100px}
+  .sb{display:grid;grid-template-columns:140px repeat(10,1fr);border:1px solid rgba(0,229,255,.35);border-radius:16px;overflow:hidden;background:rgba(3,10,30,.7);box-shadow:0 0 40px rgba(0,229,255,.15)}
+  .sb div{border-left:1px solid rgba(0,229,255,.2);text-align:center;font-family:Orbitron}
+  .sb .who{border-left:none;display:flex;align-items:center;justify-content:center;font-size:13px;letter-spacing:.15em;color:var(--lane-blue);padding:10px}
+  .sb .hd{font-size:10px;letter-spacing:.2em;color:#8fa3bb;padding:8px 0;border-bottom:1px solid rgba(0,229,255,.2)}
+  .sb .fr{padding:14px 0 10px}
+  .sb .fr .m{display:block;font-size:clamp(16px,2vw,26px);font-weight:900;color:var(--strike-red);text-shadow:0 0 12px var(--strike-red);opacity:0;transform:scale(2);transition:all .35s cubic-bezier(.2,1.5,.4,1)}
+  .sb .fr .t{display:block;font-size:clamp(11px,1.2vw,15px);color:#e8f4ff;margin-top:6px;opacity:0;transition:opacity .3s .15s}
+  .sb .fr.on .m,.sb .fr.on .t{opacity:1;transform:none}
+  .sb .fr.on{background:rgba(255,45,85,.06)}
+  .perfect{margin-top:18px;font-family:Orbitron;letter-spacing:.3em;color:var(--strike-red);text-shadow:0 0 16px var(--strike-red);opacity:0;transition:opacity .6s}
+  .perfect.on{opacity:1}
+  @media(max-width:760px){.sb{grid-template-columns:repeat(5,1fr)}.sb .who,.sb .hd.h0{display:none}}
+</style>
+</head>
+<body>
+
+<div id="orb"></div><canvas id="trail"></canvas>
+<div id="gutter"><b></b><i></i></div>
+<header>
+  <a class="logo" href="#cinema">
+    <svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>
+    TWISTED <b>PIN</b>
+  </a>
+  <div class="right"><nav><a href="#score">Score</a><a href="#bowl">Bowl</a><a href="#plan">Plan Your Night</a><a href="#yourturn">Your Turn</a><a href="#more">Between Frames</a><a href="#visit">Visit</a></nav>
+  <button id="sound" aria-label="Turn music on or off"><span class="eq"><i></i><i></i><i></i><i></i></span><span class="lbl">SOUND ON</span></button></div>
+  <audio id="music" src="music.mp3" loop preload="auto"></audio>
+</header>
+
+<!-- ===== THE CINEMA: shot 1 the throw, shot 2 the impact, shot 3 the turn ===== -->
+<section id="cinema" style="padding:0;max-width:none">
+  <div class="stage">
+  <img class="poster on" src="poster.jpg" alt="A bowler in a glowing techwear suit on a neon lane while his friends watch">
+  <img class="banner" src="banner.jpg" alt="The Twisted Pin lounge with TWISTED PIN glowing on the giant screen wall">
+  <video id="v1" src="throw.mp4" muted playsinline preload="auto"></video>
+  <video id="v2" src="impact.mp4" muted playsinline preload="auto"></video>
+  <video id="v3" src="turn.mp4" muted playsinline preload="auto"></video>
+  <video id="v4" src="hang.mp4" muted playsinline preload="none"></video>
+  <video id="v5" src="next.mp4" muted playsinline preload="none"></video>
+  <video id="v6" src="talk.mp4" muted playsinline preload="none"></video>
+  </div>
+  <canvas id="dust"></canvas>
+
+  <div id="flash"></div>
+  <div id="strike">
+    <svg viewBox="0 0 300 300"><path class="glow" d="M40 40 L260 260"/><path class="glow b" d="M260 40 L40 260"/><path class="core" d="M40 40 L260 260"/><path class="core b" d="M260 40 L40 260"/></svg>
+    <div class="word">STRIKE</div>
+  </div>
+
+  <!-- the 10 pins: back row on top, head pin at the bottom, just like a real rack -->
+  <nav class="rack" aria-label="Twisted Pin menu">
+    <div class="row"><a class="pinbtn" href="#bowl"><svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>LEAGUES</a><a class="pinbtn red" href="https://www.twistedpin.com/eat/" target="_blank" rel="noopener"><svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>EAT</a><a class="pinbtn white" href="https://www.twistedpin.com/menu/" target="_blank" rel="noopener"><svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>MENU</a><a class="pinbtn" href="https://www.twistedpin.com/game/" target="_blank" rel="noopener"><svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>GAME</a></div>
+    <div class="row"><a class="pinbtn red" href="https://www.twistedpin.com/events/" target="_blank" rel="noopener"><svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>EVENTS</a><a class="pinbtn white" href="https://www.twistedpin.com/events/" target="_blank" rel="noopener"><svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>PLAN AN EVENT</a><a class="pinbtn" href="https://www.twistedpin.com/vip-suite/" target="_blank" rel="noopener"><svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>VIP SUITE</a></div>
+    <div class="row"><a class="pinbtn main" href="https://www.twistedpin.com/bowl/" target="_blank" rel="noopener"><svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>BOWL</a><a class="pinbtn white" href="#visit"><svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>VISIT</a></div>
+    <div class="row"><a class="pinbtn main" href="https://www.twistedpin.com/" target="_blank" rel="noopener"><svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>RESERVE A LANE</a></div>
+  </nav>
+
+  <div class="headline">
+    <h1>FUTURISTIC <span class="x">BOWLING</span></h1>
+    <div class="row"><a class="btn" href="https://www.twistedpin.com/" target="_blank" rel="noopener">BOOK A LANE</a><a class="btn ghost" href="tel:+18157827790">CALL (815) 782-7790</a></div>
+    <form id="nameForm" autocomplete="off"><input id="nameIn" maxlength="14" placeholder="Put your name on the wall"><button>ROLL IT</button></form>
+  </div>
+
+  <div id="nowbowling">NOW BOWLING <b id="nbName">YOU</b></div>
+  <button id="prompt">TAP TO ENTER THE LANES</button>
+  <button id="skip">SKIP INTRO</button>
+</section>
+
+<main>
+  <section class="panel">
+    <img src="celebrate.jpg" alt="The bowler turns around in glowing visor glasses as his friends cheer and a neon X lights up the screen wall">
+    <div class="copy reveal">
+      <div class="eyebrow">STRIKE NIGHTS</div>
+      <h2>Every strike<br>gets its <em>moment.</em></h2>
+      <p class="sub" style="margin:18px 0 28px">The lights hit, the screens go off, your crew loses it. This is bowling the way it should feel.</p>
+      <div class="row"><a class="btn" href="https://www.twistedpin.com/bowl/" target="_blank" rel="noopener">BOWL WITH US</a></div>
+    </div>
+  </section>
+
+  <!-- social proof, pulled from the real Twisted Pin site -->
+  <section class="proof reveal">
+    <div><b data-count="4.5" data-dec="1">0</b><span>GOOGLE · <i data-count="1221">0</i> REVIEWS</span></div>
+    <div><b data-count="17">0</b><span>TRADITIONAL LANES</span></div>
+    <div><b>+1</b><span>SEMI-PRIVATE VIP SUITE</span></div>
+    <div><b data-count="4.1" data-dec="1">0</b><span>YELP RATING</span></div>
+  </section>
+
+  <section class="scoreboard" id="score">
+    <div class="reveal"><div class="eyebrow">THE SCOREBOARD</div>
+    <h2>Ten frames. <em>Twelve strikes.</em></h2>
+    <p class="sub">Scroll in and watch your perfect game light up.</p></div>
+    <div class="sb reveal"><div class="hd h0">BOWLER</div><div class="hd">1</div><div class="hd">2</div><div class="hd">3</div><div class="hd">4</div><div class="hd">5</div><div class="hd">6</div><div class="hd">7</div><div class="hd">8</div><div class="hd">9</div><div class="hd">10</div><div class="who" id="sbName">YOU</div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div><div class="fr"><span class="m">X</span><span class="t">0</span></div></div>
+    <p class="perfect">300 · PERFECT GAME</p>
+  </section>
+
+  <section id="bowl">
+    <div class="reveal"><div class="eyebrow">BOWLING FIRST</div>
+    <h2>Built for bowlers.<br><em>Bring everybody.</em></h2>
+    <p class="sub">This is a bowling house before it's anything else. Walk in for a couple games or take over the whole suite.</p></div>
+    <div class="grid reveal">
+      <a class="card" href="https://www.twistedpin.com/bowl/" target="_blank" rel="noopener"><div class="ico">🎳</div><h3>17 LANES</h3><p>Seventeen traditional lanes. Walk in, grab shoes, and play a couple games with your crew.</p><span class="go">BOWL →</span></a>
+      <a class="card red" href="https://www.twistedpin.com/vip-suite/" target="_blank" rel="noopener"><div class="ico">💎</div><h3>VIP SUITE</h3><p>Semi-private lanes with in-house catering. Reserve part of the suite or all of it.</p><span class="go">SEE THE SUITE →</span></a>
+      <a class="card" href="https://www.twistedpin.com/bowl/" target="_blank" rel="noopener"><div class="ico">🏆</div><h3>LEAGUES</h3><p>Weeknight leagues for the regulars, the rookies, and everybody chasing a 300.</p><span class="go">JOIN A LEAGUE →</span></a>
+    </div>
+  </section>
+
+  <!-- plan your night: pick your crew and your vibe, get a game plan -->
+  <section id="plan">
+    <div class="reveal"><div class="eyebrow">PLAN YOUR NIGHT</div>
+    <h2>Who's rolling <em>with you?</em></h2>
+    <p class="sub">Two taps and we'll set your lane plan.</p></div>
+    <div class="planner reveal">
+      <div class="q"><p class="lab">YOUR CREW</p><div class="chips" data-k="crew">
+        <button data-v="2">Just us two</button><button data-v="6">3 to 6</button><button data-v="15">7 to 15</button><button data-v="30">16 or more</button></div></div>
+      <div class="q"><p class="lab">THE VIBE</p><div class="chips" data-k="vibe">
+        <button data-v="date">Date night</button><button data-v="bday">Birthday</button><button data-v="team">Team outing</button><button data-v="fam">Family day</button><button data-v="bowl">Just here to bowl</button></div></div>
+      <div class="result"><p class="lab">YOUR GAME PLAN</p><h3 id="planTitle">Pick your crew and your vibe</h3><p id="planText">We'll match you with the right lanes.</p>
+        <a id="planCta" class="btn" href="https://www.twistedpin.com/" target="_blank" rel="noopener">RESERVE A LANE</a></div>
+    </div>
+  </section>
+
+  <section class="yourturn" id="yourturn">
+    <div class="reveal">
+      <div class="eyebrow">YOUR TURN</div>
+      <h2>Step up to <em>the lane</em></h2>
+      <p class="sub">Tap the lane, watch the throw, and wait for that one pin to make up its mind.</p>
+    </div>
+    <div class="frame reveal"><iframe src="lane.html" title="Interactive neon bowling lane" loading="lazy"></iframe></div>
+  </section>
+
+  <section id="more">
+    <div class="reveal"><div class="eyebrow">BETWEEN FRAMES</div>
+    <h2>When it's not <em>your turn</em></h2>
+    <p class="sub">Keep the energy up between frames.</p></div>
+    <div class="grid reveal">
+      <a class="card" href="https://www.twistedpin.com/game/" target="_blank" rel="noopener"><div class="ico">🕹️</div><h3>ARCADE</h3><p>Skee-ball, redemption, jackpot. Win tickets, raid the prize wall, and walk out with the giant bear.</p><span class="go">PLAY →</span></a>
+      <a class="card red" href="https://www.twistedpin.com/eat/" target="_blank" rel="noopener"><div class="ico">🍔</div><h3>THE KITCHEN</h3><p>A real kitchen built to share. Wings, flatbreads, cheese curds, all made to travel straight to your lane.</p><span class="go">SEE THE MENU →</span></a>
+      <a class="card" href="https://www.twistedpin.com/events/" target="_blank" rel="noopener"><div class="ico">🎉</div><h3>EVENTS</h3><p>Birthdays, team nights, celebrations. Tell them what you want and they set it up.</p><span class="go">PLAN AN EVENT →</span></a>
+    </div>
+  </section>
+
+  <section id="visit">
+    <div class="visit reveal">
+      <div>
+        <div class="eyebrow">COME BOWL</div>
+        <p class="big">15610 Joliet Road<br>Plainfield, IL</p>
+        <p class="sub" style="margin-top:16px">Your lane is closer than you think.</p>
+        <div class="cities"><span>Naperville</span><span>Bolingbrook</span><span>Romeoville</span><span>Joliet</span><span>Shorewood</span><span>Oswego</span><span>Lockport</span></div>
+        <div class="row">
+          <a class="btn" href="https://maps.google.com/?q=15610+Joliet+Rd+Plainfield+IL" target="_blank" rel="noopener">GET DIRECTIONS</a>
+          <a class="btn ghost" href="tel:+18157827790">(815) 782-7790</a>
+        </div>
+      </div>
+      <div class="card"><p class="eyebrow">#GETTWISTED</p><p class="big">Roll up.<br>Knock 'em down.<br><span style="color:var(--strike-red)">Leave with an X.</span></p></div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="tag">#GETTWISTED</div>
+    Concept redesign by Dice Gamble for The Open Experience. Not the official Twisted Pin website.<br>
+    <button id="replay">↻ THROW IT AGAIN</button>
+  </footer>
+</main>
+
+<script>
+/* =========================================================
+   THE TWISTED PIN EXPERIENCE (cinematic cut)
+   Shot 1 throw.mp4 → Shot 2 impact.mp4 → X + menu → Shot 3 turn.mp4
+   Timing knobs (seconds):                                   */
+const IMPACT_AT = 1.1;   // when the ball hits the pins inside impact.mp4
+const MENU_AFTER = 0.7;  // the X lands first, then the pins fly
+/* ========================================================= */
+const v1 = document.getElementById('v1'), v2 = document.getElementById('v2'), v3 = document.getElementById('v3');
+const poster = document.querySelector('.poster'), banner = document.querySelector('.banner'), B = document.body;
+let started = false, xShown = false;
+
+function show(v){ [poster,banner,v1,v2,v3].forEach(el => el.classList.toggle('on', el===v)); }
+function play(v){ show(v); v.currentTime = 0; const p = v.play(); if (p) p.catch(finish); }
+
+function start(){
+  if (started || B.classList.contains('done')) return; started = true; B.classList.add('rolling'); play(v1);
+}
+v1.addEventListener('ended', () => play(v2));
+v2.addEventListener('timeupdate', () => {
+  if (!xShown && v2.currentTime >= IMPACT_AT){ xShown = true; strike(); }
+});
+v2.addEventListener('ended', () => { B.classList.add('small-x'); play(v3); });
+v3.addEventListener('ended', finish);
+[v1,v2,v3].forEach(v => v.addEventListener('error', finish));
+
+/* each button starts as a flying pin: random spin and launch point */
+document.querySelectorAll('.pinbtn').forEach((b,i) => {
+  const r = (a,b) => a + Math.random()*(b-a);
+  b.style.setProperty('--fx', r(-45,45)+'vw'); b.style.setProperty('--fy', r(-30,10)+'vh');
+  b.style.setProperty('--fr', r(-540,540)+'deg'); b.style.setProperty('--d', (i*0.22)+'s');
+  b.style.setProperty('--fd', r(3.4,6.2).toFixed(2)+'s'); b.style.setProperty('--amp', r(5,12).toFixed(1)+'px'); b.style.setProperty('--ax', r(-4,4).toFixed(1)+'px');
+});
+function strike(){ B.classList.add('x'); setTimeout(() => B.classList.add('menu'), MENU_AFTER*1000); }
+function finish(){ if (!xShown){ xShown = true; strike(); } show(banner); B.classList.add('small-x','menu','done','rolling'); setTimeout(musicOut, 4500); }
+/* after the pins land, the music slowly fades out so visitors can explore in peace (SOUND ON brings it back) */
+let outTimer;
+function musicOut(){ if (typeof music === 'undefined' || music.paused) return; clearInterval(outTimer); const v0 = music.volume, t0 = performance.now(), dur = 7000;
+  outTimer = setInterval(() => { if (music.paused){ clearInterval(outTimer); return; } const k = Math.min(1,(performance.now()-t0)/dur); music.volume = v0*(1-k)*(1-k);
+    if (k >= 1){ clearInterval(outTimer); music.pause(); B.classList.remove('playing'); lbl.textContent = 'SOUND ON'; } }, 50); }
+
+document.getElementById('prompt').onclick = start;
+document.getElementById('cinema').addEventListener('click', e => { if (!e.target.closest('a,button')) start(); });
+document.getElementById('skip').onclick = () => { [v1,v2,v3].forEach(v=>v.pause()); finish(); };
+document.getElementById('replay').onclick = () => {
+  scrollTo({top:0}); B.classList.remove('x','menu','small-x','done','rolling'); started = false; xShown = false; show(poster); setTimeout(start, 600);
+};
+if (matchMedia('(prefers-reduced-motion: reduce)').matches){ show(poster); finish(); }
+else setTimeout(start, 3500); // tap to enter (with sound); starts silently after 3.5s if no tap
+
+/* ===== IMMERSION LAYER ===== */
+const root = document.documentElement, fine = matchMedia('(pointer:fine)').matches;
+let mx = 0, my = 0, ox = innerWidth/2, oy = innerHeight/2, tx = ox, ty = oy;
+addEventListener('mousemove', e => { tx = e.clientX; ty = e.clientY; mx = e.clientX/innerWidth - .5; my = e.clientY/innerHeight - .5;
+  root.style.setProperty('--mx', mx.toFixed(3)); root.style.setProperty('--my', my.toFixed(3)); });
+// glowing ball cursor with a light trail
+const orb = document.getElementById('orb'), tc = document.getElementById('trail'), tctx = tc.getContext('2d'); const pts = [];
+function sizeTrail(){ tc.width = innerWidth; tc.height = innerHeight; } sizeTrail(); addEventListener('resize', sizeTrail);
+document.addEventListener('mouseover', e => orb.classList.toggle('big', !!e.target.closest('a,button,iframe')));
+// floating light dust over the hero
+const dc = document.getElementById('dust'), dctx = dc.getContext('2d'); let dust = [];
+function sizeDust(){ dc.width = dc.offsetWidth; dc.height = dc.offsetHeight;
+  dust = Array.from({length: 70}, () => ({x: Math.random()*dc.width, y: Math.random()*dc.height, r: Math.random()*1.8+.4, s: Math.random()*.35+.08, z: Math.random(),
+    c: ['0,229,255','244,251,255','255,45,85'][Math.random()<.6?0:Math.random()<.75?1:2]})); }
+sizeDust(); addEventListener('resize', sizeDust);
+function loop(t){
+  ox += (tx-ox)*.22; oy += (ty-oy)*.22; orb.style.transform = `translate(${ox}px,${oy}px)`;
+  if (fine){ pts.push({x:ox,y:oy}); if (pts.length > 18) pts.shift(); tctx.clearRect(0,0,tc.width,tc.height);
+    for (let i=1;i<pts.length;i++){ tctx.strokeStyle = `rgba(0,229,255,${i/pts.length*.45})`; tctx.lineWidth = i/pts.length*6; tctx.lineCap='round';
+      tctx.beginPath(); tctx.moveTo(pts[i-1].x,pts[i-1].y); tctx.lineTo(pts[i].x,pts[i].y); tctx.stroke(); } }
+  if (scrollY < innerHeight){ dctx.clearRect(0,0,dc.width,dc.height);
+    dust.forEach(p => { p.y -= p.s*(1+p.z); p.x += Math.sin(t/1800 + p.z*9)*.15; if (p.y < -5){ p.y = dc.height+5; p.x = Math.random()*dc.width; }
+      const px = p.x - mx*40*p.z, py = p.y - my*30*p.z, a = .35 + .4*Math.sin(t/700 + p.z*20);
+      dctx.fillStyle = `rgba(${p.c},${Math.max(0,a)})`; dctx.shadowColor = `rgba(${p.c},1)`; dctx.shadowBlur = 8; dctx.beginPath(); dctx.arc(px,py,p.r,0,7); dctx.fill(); }); }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+// scroll: ball rolls down the gutter, panels drift, sections reveal
+const gut = document.getElementById('gutter');
+addEventListener('scroll', () => {
+  const p = scrollY / (document.body.scrollHeight - innerHeight) * 100; gut.style.setProperty('--p', p.toFixed(1)+'%');
+  document.querySelectorAll('.panel img').forEach(img => { const r = img.parentElement.getBoundingClientRect(); img.style.setProperty('--py', (r.top*-.18).toFixed(1)+'px'); });
+}, {passive:true});
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold:.18});
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+// cards tilt toward the cursor
+document.querySelectorAll('.card').forEach(c => {
+  c.addEventListener('mousemove', e => { const r = c.getBoundingClientRect(), x = (e.clientX-r.left)/r.width, y = (e.clientY-r.top)/r.height;
+    c.style.transform = `perspective(800px) rotateX(${(.5-y)*10}deg) rotateY(${(x-.5)*12}deg) translateY(-6px)`;
+    c.style.setProperty('--gx', x*100+'%'); c.style.setProperty('--gy', y*100+'%'); });
+  c.addEventListener('mouseleave', () => { c.style.transform = ''; });
+});
+
+
+/* ===== SOUND EFFECTS: whoosh, roll, crash, boom, cheer, button thuds ===== */
+let ac, bufs = {};
+function audioInit(){
+  if (ac) return; try { ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return; }
+  ['crash','cheer'].forEach(n => fetch(n+'.mp3').then(r=>r.arrayBuffer()).then(b=>ac.decodeAudioData(b)).then(d=>bufs[n]=d).catch(()=>{}));
+}
+function noiseBuf(sec){ const b = ac.createBuffer(1, ac.sampleRate*sec, ac.sampleRate), d = b.getChannelData(0); for (let i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b; }
+function sfxWhoosh(vol=.35){ if(!ac) return; const t=ac.currentTime, s=ac.createBufferSource(), f=ac.createBiquadFilter(), g=ac.createGain();
+  s.buffer=noiseBuf(.7); f.type='bandpass'; f.Q.value=1.2; f.frequency.setValueAtTime(400,t); f.frequency.exponentialRampToValueAtTime(3200,t+.35); f.frequency.exponentialRampToValueAtTime(900,t+.6);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.25); g.gain.exponentialRampToValueAtTime(.001,t+.65); s.connect(f).connect(g).connect(ac.destination); s.start(t); }
+function sfxThud(vol=.7, pitch=90){ if(!ac) return; const t=ac.currentTime, o=ac.createOscillator(), g=ac.createGain();
+  o.type='sine'; o.frequency.setValueAtTime(pitch*1.8,t); o.frequency.exponentialRampToValueAtTime(pitch*.5,t+.25);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+.35); o.connect(g).connect(ac.destination); o.start(t); o.stop(t+.4);
+  const s=ac.createBufferSource(), f=ac.createBiquadFilter(), g2=ac.createGain(); s.buffer=noiseBuf(.08); f.type='highpass'; f.frequency.value=2500;
+  g2.gain.setValueAtTime(vol*.35,t); g2.gain.exponentialRampToValueAtTime(.001,t+.07); s.connect(f).connect(g2).connect(ac.destination); s.start(t); }
+function sfxRoll(sec){ if(!ac) return; const t=ac.currentTime, s=ac.createBufferSource(), f=ac.createBiquadFilter(), g=ac.createGain();
+  s.buffer=noiseBuf(sec); f.type='lowpass'; f.frequency.value=180; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.9,t+.4); g.gain.linearRampToValueAtTime(1.2,t+sec-.1); g.gain.linearRampToValueAtTime(0,t+sec);
+  s.connect(f).connect(g).connect(ac.destination); s.start(t); }
+function sfxFile(n, vol=1){ if(!ac || !bufs[n]) return; const s=ac.createBufferSource(), g=ac.createGain(); s.buffer=bufs[n]; g.gain.value=vol; s.connect(g).connect(ac.destination); s.start(); }
+let rolled = false;
+v1.addEventListener('play', () => { rolled = false; sfxWhoosh(.25); clubBuild((v1.duration||10) + IMPACT_AT); });
+v1.addEventListener('timeupdate', () => { if (!rolled && v1.currentTime >= 5.4){ rolled = true; sfxRoll(Math.max(1.5,(v1.duration||10)-5.4+IMPACT_AT)); } });
+v3.addEventListener('play', () => sfxFile('cheer', .9));
+const _strike = strike;
+strike = function(){ clubDrop(); sfxFile('crash', 1); sfxThud(1, 60); const c=document.getElementById('cinema'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
+  document.querySelectorAll('.pinbtn').forEach((b,i) => { const d=i*0.22+MENU_AFTER; setTimeout(()=>sfxWhoosh(.18), d*1000); setTimeout(()=>sfxThud(.55, 70+i*6), (d+.88)*1000); });
+  if (!music.paused) fadeTo(.35); 
+  _strike(); };
+
+/* ===== SOUND: the club track ===== */
+const music = document.getElementById('music'), sbtn = document.getElementById('sound'), lbl = sbtn.querySelector('.lbl');
+let wantSound = true, fading;
+function fadeTo(v){ clearInterval(fading); fading = setInterval(() => { const d = v - music.volume; if (Math.abs(d) < .03){ music.volume = v; clearInterval(fading); if (!v) music.pause(); } else music.volume += d*.15; }, 40); }
+let lp, mg;
+function wireMusic(){ if (lp || !ac) return; try { const src = ac.createMediaElementSource(music); lp = ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value = 220; lp.Q.value = .8;
+  mg = ac.createGain(); src.connect(lp).connect(mg).connect(ac.destination); } catch(e){} }
+function clubBuild(sec){ if (!lp) return; const t = ac.currentTime; lp.frequency.cancelScheduledValues(t); lp.frequency.setValueAtTime(220,t);
+  lp.frequency.exponentialRampToValueAtTime(900,t+sec*.55); lp.frequency.exponentialRampToValueAtTime(20000,t+sec); }
+function clubDrop(){ if (!lp) return; const t = ac.currentTime; lp.frequency.cancelScheduledValues(t); lp.frequency.setValueAtTime(20000,t); }
+function soundOn(){ clearInterval(outTimer); audioInit(); wireMusic(); if (B.classList.contains('done') || !v1.paused && v1.currentTime > 0 && !started) clubDrop(); else if (B.classList.contains('rolling') && !v1.paused) clubBuild(Math.max(2,(v1.duration||10)-v1.currentTime+IMPACT_AT)); music.volume = 0; const p = music.play(); if (p) p.then(() => { fadeTo(.6); B.classList.add('playing'); lbl.textContent = 'SOUND OFF'; }).catch(()=>{}); }
+function soundOff(){ fadeTo(0); B.classList.remove('playing'); lbl.textContent = 'SOUND ON'; }
+sbtn.addEventListener('click', e => { e.stopPropagation(); wantSound = !B.classList.contains('playing'); wantSound ? soundOn() : soundOff(); });
+['pointerdown','keydown','touchstart'].forEach(ev => addEventListener(ev, function first(e){
+  if (e.target.closest && e.target.closest('#sound')) return;
+  audioInit(); if (ac && ac.state==='suspended') ac.resume();
+  if (wantSound && music.paused) soundOn();
+  removeEventListener(ev, first);
+}, {once:false}));
+
+/* ===== COUNTERS + PLAN YOUR NIGHT ===== */
+const cio = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; cio.unobserve(e.target);
+  e.target.querySelectorAll('[data-count]').forEach(el => { const end = +el.dataset.count, dec = +(el.dataset.dec||0), t0 = performance.now();
+    (function tick(t){ const k = Math.min(1,(t-t0)/1400), v = end*(1-Math.pow(1-k,3)); el.textContent = dec ? v.toFixed(dec) : Math.round(v).toLocaleString(); if (k<1) requestAnimationFrame(tick); })(t0); });
+  if (typeof sfxThud==='function') sfxThud(.35,80); }), {threshold:.4});
+document.querySelectorAll('.proof').forEach(el => cio.observe(el));
+const pick = {};
+const TP = 'https://www.twistedpin.com';
+const PLANS = {
+  date:{t:'Date night on the lanes', x:'Grab a lane for two, split some wings and flatbreads, then settle it at skee-ball. Loser buys the next game.', c:'RESERVE A LANE', h:TP+'/'},
+  bday:{t:'Birthday takeover', x:'Take over the semi-private VIP suite with in-house catering. Tell them the vibe and they set it up.', c:'PLAN A BIRTHDAY', h:TP+'/events/'},
+  team:{t:'Team night that does not feel like work', x:'Lanes, food built to share, and the arcade for the competitive ones. Book the VIP suite for the whole crew.', c:'PLAN A TEAM EVENT', h:TP+'/events/'},
+  fam:{t:'Family day', x:'Lanes for everybody, a real kitchen, and a prize wall the kids will drag you to.', c:'RESERVE A LANE', h:TP+'/'},
+  bowl:{t:'Lanes. Shoes. Strikes.', x:'Seventeen traditional lanes. Walk in for a couple games and chase that X.', c:'BOWL NOW', h:TP+'/bowl/'}
+};
+function updatePlan(){
+  const crew = +(pick.crew||0), vibe = pick.vibe; if (!vibe && !crew) return;
+  let p = PLANS[vibe||'bowl'];
+  if (crew >= 16 && vibe !== 'bday' && vibe !== 'team') p = {t:'Big crew? Take the suite', x:'For a group your size, the semi-private VIP suite is the move, with in-house catering and lanes to yourselves.', c:'PLAN AN EVENT', h:TP+'/events/'};
+  const r = document.querySelector('.planner .result');
+  document.getElementById('planTitle').textContent = p.t + (crew ? ` · ${crew>=30?'16+':crew<=2?'2':crew<=6?'3 to 6':'7 to 15'} people` : '');
+  document.getElementById('planText').textContent = p.x;
+  const cta = document.getElementById('planCta'); cta.textContent = p.c; cta.href = p.h;
+  r.classList.remove('pop'); void r.offsetWidth; r.classList.add('pop');
+}
+document.querySelectorAll('.chips').forEach(g => g.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+  g.querySelectorAll('button').forEach(x => x.classList.toggle('on', x===b)); pick[g.dataset.k] = b.dataset.v;
+  if (typeof sfxThud==='function') sfxThud(.4, 110); updatePlan(); }));
+
+/* ===== 3D MAGNETIC PINS + CURSOR SOUND ===== */
+function sfxTick(pitch=1600, vol=.08){ if(!ac) return; const t=ac.currentTime, o=ac.createOscillator(), g=ac.createGain();
+  o.type='triangle'; o.frequency.setValueAtTime(pitch,t); o.frequency.exponentialRampToValueAtTime(pitch*1.5,t+.05);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0008,t+.09); o.connect(g).connect(ac.destination); o.start(t); o.stop(t+.1); }
+document.querySelectorAll('.pinbtn').forEach((b,i) => {
+  b.addEventListener('pointerenter', () => { b.classList.add('hot'); sfxTick(900+i*120, .09); });
+  b.addEventListener('pointermove', e => { const r = b.getBoundingClientRect(), x = (e.clientX-r.left)/r.width, y = (e.clientY-r.top)/r.height;
+    b.style.setProperty('--hx', x*100+'%'); b.style.setProperty('--hy', y*100+'%');
+    b.style.transform = `translate3d(${(x-.5)*10}px,${(y-.5)*8-8}px,60px) rotateX(${(.5-y)*24}deg) rotateY(${(x-.5)*28}deg) scale(1.1)`; });
+  b.addEventListener('pointerleave', () => { b.classList.remove('hot'); b.style.transform = ''; });
+  b.addEventListener('pointerdown', () => sfxThud(.6, 95));
+});
+// every link and button gets a soft tick, the cursor whooshes when you sweep it fast
+document.addEventListener('pointerover', e => { const el = e.target.closest('a:not(.pinbtn),button:not(.pinbtn),.card,.chips button'); if (el && !el.contains(e.relatedTarget)) sfxTick(2200, .05); });
+let lastX = 0, lastY = 0, lastT = 0, lastW = 0;
+addEventListener('pointermove', e => { const t = performance.now(), dt = t-lastT; if (dt > 16){ const v = Math.hypot(e.clientX-lastX, e.clientY-lastY)/dt;
+  if (v > 2.6 && t-lastW > 450){ lastW = t; sfxWhoosh(.06); } lastX = e.clientX; lastY = e.clientY; lastT = t; } });
+
+/* ===== THE MOVIE KEEPS GOING: hang out, then the next bowler steps up ===== */
+const v4 = document.getElementById('v4'), v5 = document.getElementById('v5'), v6 = document.getElementById('v6');
+let ambient = false;
+function startAmbient(){ if (ambient || matchMedia('(prefers-reduced-motion: reduce)').matches) return; ambient = true; [v4,v6,v5].forEach(v => v.preload = 'auto'); playAmb(v4); }
+function playAmb(v){ v.currentTime = 0; const p = v.play(); if (p) p.then(() => show(v)).catch(() => { if (v === v6) playAmb(v5); else show(banner); }); }
+// the movie: he sits with the crew -> they laugh and talk -> she steps up next -> rest on the crew still
+v4.addEventListener('ended', () => playAmb(v6));
+v6.addEventListener('ended', () => playAmb(v5));
+v5.addEventListener('ended', () => show(banner));
+[v4,v5].forEach(v => v.addEventListener('error', () => show(banner)));
+v6.addEventListener('error', () => { if (ambient) playAmb(v5); });
+const _finish = finish;
+finish = function(){ _finish(); startAmbient(); };
+v3.addEventListener('ended', () => startAmbient());
+document.getElementById('skip').onclick = () => { [v1,v2,v3].forEach(v=>v.pause()); finish(); };
+document.getElementById('replay').onclick = () => { [v4,v5,v6].forEach(v=>v.pause()); ambient = false;
+  scrollTo({top:0}); B.classList.remove('x','menu','small-x','done','rolling'); started = false; xShown = false; show(poster); setTimeout(start, 600); };
+
+/* ===== NOW BOWLING: your name on the wall ===== */
+function setName(n){ n = (n||'').trim().toUpperCase().slice(0,14); if (!n) return;
+  document.getElementById('nbName').textContent = n; document.getElementById('sbName').textContent = n;
+  const nb = document.getElementById('nowbowling'); nb.classList.remove('flash'); void nb.offsetWidth; nb.classList.add('flash');
+  try { localStorage.setItem('tpName', n); } catch(e){} }
+document.getElementById('nameForm').addEventListener('submit', e => { e.preventDefault(); const v = document.getElementById('nameIn').value; setName(v);
+  if (typeof sfxThud==='function'){ sfxThud(.8,60); sfxWhoosh(.2); } document.getElementById('nameIn').value=''; });
+try { const saved = localStorage.getItem('tpName'); if (saved){ document.getElementById('nbName').textContent = saved; document.getElementById('sbName').textContent = saved; } } catch(e){}
+
+/* ===== SCOREBOARD: a perfect game fills in as it scrolls into view ===== */
+const sio = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; sio.unobserve(e.target);
+  e.target.querySelectorAll('.fr').forEach((f,i) => setTimeout(() => { f.classList.add('on'); f.querySelector('.t').textContent = (i+1)*30;
+    if (i===9) f.querySelector('.m').textContent = 'XXX'; if (typeof sfxThud==='function') sfxThud(.45, 70+i*8); }, 250*i));
+  setTimeout(() => { e.target.parentElement.querySelector('.perfect').classList.add('on'); if (typeof sfxFile==='function') sfxFile('cheer', .5); }, 2700);
+}), {threshold:.5});
+document.querySelectorAll('.sb').forEach(el => sio.observe(el));
+</script>
+</body>
+</html>
