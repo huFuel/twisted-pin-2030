@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twisted Pin 2030 | Bowling From The Future</title>
+<meta name="description" content="Concept redesign of the Twisted Pin bowling experience in Plainfield, IL. Step on the lane.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  /* ===== 1. BRAND COLORS: change these and the whole site changes ===== */
+  :root{
+    --lane-blue:#00e5ff;      /* Tron neon blue */
+    --deep-blue:#0047ff;
+    --strike-red:#ff2d55;     /* the big X */
+    --pin-white:#f4fbff;
+    --night:#030712;
+    --glass:rgba(8,20,45,.55);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--night);color:var(--pin-white);font-family:Poppins,system-ui,sans-serif;overflow:hidden}
+  body.revealed{overflow-y:auto}
+
+  /* ===== 2. THE LANE (the animated canvas behind everything) ===== */
+  #lane{position:fixed;inset:0;width:100%;height:100%;display:block;transition:opacity 1.2s, filter 1.2s}
+  body.revealed #lane{opacity:.38;filter:saturate(1.2)}
+
+  #prompt{position:fixed;left:50%;bottom:9vh;transform:translateX(-50%);font-family:Orbitron;letter-spacing:.35em;
+    font-size:clamp(12px,1.6vw,16px);color:var(--lane-blue);text-shadow:0 0 12px var(--lane-blue);animation:pulse 1.4s infinite;cursor:pointer;z-index:5;text-align:center}
+  @keyframes pulse{50%{opacity:.35}}
+  #skip{position:fixed;right:22px;top:20px;z-index:6;background:none;border:1px solid rgba(0,229,255,.4);color:var(--lane-blue);
+    font-family:Orbitron;font-size:11px;letter-spacing:.2em;padding:8px 14px;border-radius:30px;cursor:pointer}
+  body.revealed #skip, body.rolling #prompt{display:none}
+
+  /* ===== 3. THE SITE (shows up after the strike) ===== */
+  main{position:relative;z-index:2;opacity:0;transform:translateY(40px);transition:opacity 1.2s .2s, transform 1.2s .2s;pointer-events:none}
+  body.revealed main{opacity:1;transform:none;pointer-events:auto}
+
+  header{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;padding:18px 5vw;
+    backdrop-filter:blur(14px);background:rgba(3,7,18,.55);border-bottom:1px solid rgba(0,229,255,.15);z-index:10}
+  .logo{display:flex;align-items:center;gap:10px;font-family:Orbitron;font-weight:900;letter-spacing:.12em;font-size:18px;text-decoration:none;color:var(--pin-white)}
+  .logo svg{width:22px;height:34px;transform-origin:50% 100%;animation:wobble 3.2s ease-in-out infinite}
+  .logo b{color:var(--lane-blue);text-shadow:0 0 10px var(--lane-blue)}
+  @keyframes wobble{0%,60%,100%{transform:rotate(0)}66%{transform:rotate(-14deg)}72%{transform:rotate(11deg)}78%{transform:rotate(-7deg)}84%{transform:rotate(4deg)}90%{transform:rotate(-2deg)}}
+  nav a{color:var(--pin-white);opacity:.8;text-decoration:none;margin-left:26px;font-size:14px}
+  nav a:hover{opacity:1;color:var(--lane-blue)}
+  .btn{display:inline-block;font-family:Orbitron;font-size:13px;letter-spacing:.15em;padding:14px 26px;border-radius:40px;text-decoration:none;
+    color:var(--night);background:var(--lane-blue);box-shadow:0 0 24px rgba(0,229,255,.6);transition:transform .2s}
+  .btn:hover{transform:translateY(-2px) scale(1.03)}
+  .btn.ghost{background:transparent;color:var(--pin-white);border:1px solid rgba(255,255,255,.35);box-shadow:none}
+
+  section{padding:110px 6vw;max-width:1200px;margin:0 auto}
+  .hero{min-height:88vh;display:flex;flex-direction:column;justify-content:center}
+  .eyebrow{font-family:Orbitron;letter-spacing:.4em;font-size:12px;color:var(--lane-blue);margin-bottom:18px}
+  h1{font-family:Orbitron;font-weight:900;font-size:clamp(42px,8vw,108px);line-height:.95;letter-spacing:.02em}
+  h1 .x{color:var(--strike-red);text-shadow:0 0 18px var(--strike-red),0 0 50px var(--strike-red)}
+  .lead{max-width:620px;font-size:clamp(16px,1.6vw,20px);font-weight:300;opacity:.9;margin:26px 0 36px}
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  .stats{display:flex;gap:46px;margin-top:60px;flex-wrap:wrap}
+  .stats div{font-family:Orbitron;font-size:38px;font-weight:700;color:var(--lane-blue);text-shadow:0 0 14px rgba(0,229,255,.7)}
+  .stats span{display:block;font-family:Poppins;font-size:12px;letter-spacing:.2em;color:var(--pin-white);opacity:.7;margin-top:4px}
+
+  h2{font-family:Orbitron;font-size:clamp(28px,4vw,48px);margin-bottom:14px}
+  h2 em{font-style:normal;color:var(--lane-blue)}
+  .sub{opacity:.75;max-width:640px;margin-bottom:46px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+  .card{background:var(--glass);border:1px solid rgba(0,229,255,.18);border-radius:22px;padding:30px 26px;backdrop-filter:blur(10px);
+    transition:transform .3s,border-color .3s,box-shadow .3s}
+  .card:hover{transform:translateY(-6px);border-color:var(--lane-blue);box-shadow:0 0 40px rgba(0,229,255,.25)}
+  .card .ico{font-size:30px;margin-bottom:14px}
+  .card h3{font-family:Orbitron;font-size:17px;letter-spacing:.06em;margin-bottom:10px}
+  .card p{font-size:14px;opacity:.78;line-height:1.6}
+  .card.red{border-color:rgba(255,45,85,.35)}
+  .card.red:hover{border-color:var(--strike-red);box-shadow:0 0 40px rgba(255,45,85,.3)}
+
+  .visit{display:grid;grid-template-columns:1.2fr 1fr;gap:30px;align-items:center}
+  .visit .card{padding:40px}
+  .big{font-family:Orbitron;font-size:clamp(22px,3vw,34px);line-height:1.3}
+  footer{text-align:center;padding:60px 6vw 80px;opacity:.65;font-size:13px}
+  footer .tag{font-family:Orbitron;font-size:26px;color:var(--lane-blue);opacity:1;margin-bottom:14px;text-shadow:0 0 14px var(--lane-blue)}
+  #replay{background:none;border:none;color:var(--strike-red);font-family:Orbitron;letter-spacing:.2em;cursor:pointer;margin-top:18px;font-size:12px}
+  @media(max-width:760px){nav{display:none}.visit{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ===== THE EXPERIENCE: one canvas draws the lane, ball, pins and the strike ===== -->
+<canvas id="lane"></canvas>
+<div id="prompt">TAP TO BOWL</div>
+<button id="skip">SKIP INTRO</button>
+
+<!-- ===== THE SITE ===== -->
+<main>
+  <header>
+    <a class="logo" href="#top">
+      <!-- the twisted pin logo: it wobbles forever -->
+      <svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>
+      TWISTED <b>PIN</b>
+    </a>
+    <nav>
+      <a href="#bowl">Bowl</a><a href="#lanes">Lanes</a><a href="#more">Beyond the Lane</a><a href="#visit">Visit</a>
+    </nav>
+  </header>
+
+  <section class="hero" id="top">
+    <div class="eyebrow">PLAINFIELD, IL · EST. FOR BOWLERS</div>
+    <h1>BOWLING<br>FROM THE <span class="x">FUTURE</span></h1>
+    <p class="lead">You just threw a strike. That's the feeling we build every lane around. Neon lanes, real pins, your crew, and a night that rolls the way it should.</p>
+    <div class="row">
+      <a class="btn" href="https://www.twistedpin.com/" target="_blank" rel="noopener">BOOK A LANE</a>
+      <a class="btn ghost" href="tel:+18157827790">CALL (815) 782-7790</a>
+    </div>
+    <div class="stats">
+      <div>23<span>LANES</span></div>
+      <div>6<span>LANE VIP SUITE</span></div>
+      <div>X<span>EVERY NIGHT</span></div>
+    </div>
+  </section>
+
+  <section id="bowl">
+    <div class="eyebrow">BOWLING FIRST</div>
+    <h2>Step onto the <em>lane</em></h2>
+    <p class="sub">This is a bowling house before it's anything else. Pick how you want to roll.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">🎳</div><h3>OPEN BOWLING</h3><p>Bowling is booked by time, not by game. Grab a lane, grab your crew, and play as many frames as the clock gives you.</p></div>
+      <div class="card"><div class="ico">🏆</div><h3>LEAGUES</h3><p>Weeknight leagues for the regulars, the rookies, and everybody chasing a 300. Ask about the next season.</p></div>
+      <div class="card"><div class="ico">💎</div><h3>VIP SUITE</h3><p>Six private lanes for your people only. Large groups reserve ahead.</p></div>
+      <div class="card"><div class="ico">🎉</div><h3>PARTIES + EVENTS</h3><p>Birthdays, team nights, celebrations. We set up the lanes, you bring the noise.</p></div>
+    </div>
+  </section>
+
+  <section id="lanes">
+    <div class="eyebrow">THE 2030 LANE</div>
+    <h2>Every roll <em>lights up</em></h2>
+    <p class="sub">Glowing lanes, a ball that leaves a trail, and pins that hit the deck like a light show.</p>
+    <div class="grid">
+      <div class="card red"><div class="ico">✖️</div><h3>STRIKE MOMENTS</h3><p>Every strike gets its moment on the screens. You'll feel it from the approach.</p></div>
+      <div class="card"><div class="ico">🌌</div><h3>COSMIC NIGHTS</h3><p>Lights down, neon up. The whole house turns into a grid.</p></div>
+      <div class="card"><div class="ico">👟</div><h3>NEW TO BOWLING?</h3><p>Bumpers, light balls, and staff who will show you where to stand. Everybody bowls here.</p></div>
+    </div>
+  </section>
+
+  <section id="more">
+    <div class="eyebrow">BEYOND THE LANE</div>
+    <h2>Between <em>frames</em></h2>
+    <p class="sub">When it's not your turn, there's still plenty going on.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">🕹️</div><h3>ARCADE</h3><p>Games, prizes, and a little friendly competition off the lane.</p></div>
+      <div class="card"><div class="ico">🍔</div><h3>FOOD</h3><p>A real kitchen. Eat at the lane so you never miss a frame.</p></div>
+      <div class="card"><div class="ico">🍹</div><h3>CRAFT COCKTAILS</h3><p>A full bar for the grown folks.</p></div>
+      <div class="card"><div class="ico">🍺</div><h3>SELF-POUR WALL</h3><p>A self-serve tap wall of beer and wine. Pour what you want, pay for what you pour.</p></div>
+    </div>
+  </section>
+
+  <section id="visit">
+    <div class="visit">
+      <div>
+        <div class="eyebrow">COME BOWL</div>
+        <p class="big">15610 S. Joliet Road<br>Plainfield, IL 60544</p>
+        <p class="sub" style="margin-top:16px">Minutes from Joliet. Lanes are waiting.</p>
+        <div class="row">
+          <a class="btn" href="https://maps.google.com/?q=15610+S+Joliet+Rd+Plainfield+IL+60544" target="_blank" rel="noopener">GET DIRECTIONS</a>
+          <a class="btn ghost" href="https://www.twistedpin.com/" target="_blank" rel="noopener">HOURS + PRICING</a>
+        </div>
+      </div>
+      <div class="card"><p class="eyebrow">#GETTWISTED</p><p class="big">Roll up.<br>Knock 'em down.<br><span style="color:var(--strike-red)">Leave with an X.</span></p></div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="tag">#GETTWISTED</div>
+    Concept redesign by Dice Gamble for The Open Experience. Not the official Twisted Pin website.<br>
+    <button id="replay">↻ THROW IT AGAIN</button>
+  </footer>
+</main>
+
+<script>
+/* =========================================================
+   THE TWISTED PIN EXPERIENCE
+   Story: lane → ball swings back → rolls → crash →
+          one pin twists and wobbles → it falls → big X → site opens
+   ========================================================= */
+const cv = document.getElementById('lane'), ctx = cv.getContext('2d');
+let W, H, DPR;
+function resize(){ DPR = Math.min(devicePixelRatio||1, 2); W = innerWidth; H = innerHeight;
+  cv.width = W*DPR; cv.height = H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', resize); resize();
+
+/* ---- camera + 3D projection (turns lane feet into screen pixels) ---- */
+const cam = {x:0, z:0}, CAMH = 2.4, ZC = 4;
+const F = () => Math.min(W, H*1.4) * 0.8;
+const HOR = () => H * 0.38;
+function proj(x, y, z){
+  const d = z - cam.z + ZC; if (d < 0.35) return null;
+  const s = F() / d;
+  return {x: W/2 + (x - cam.x)*s, y: HOR() + (CAMH - y)*s, s};
+}
+const ease = t => t<.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+const lerp = (a,b,t) => a + (b-a)*t;
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+/* ---- the pins: classic 10-pin triangle at the end of the lane ---- */
+const PIN_Z = 60, R = 0.866;
+const RACK = [[0,0],[-.5,R],[.5,R],[-1,2*R],[0,2*R],[1,2*R],[-1.5,3*R],[-.5,3*R],[.5,3*R],[1.5,3*R]];
+let pins = [];
+function rackPins(){ pins = RACK.map(([x,dz],i) => ({x, y:0, z:PIN_Z+dz, vx:0, vy:0, vz:0, rot:0, av:0, twist:0, down:false, alpha:1, id:i+1})); }
+rackPins();
+const TWISTER = 10; // the 10-pin: always the one that twists
+
+/* ---- the ball ---- */
+const ball = {x:.55, z:2, r:.36, spin:0, trail:[]};
+
+/* ---- story state ---- */
+let phase = 'ready', t0 = performance.now(), flash = 0, shake = 0, xDraw = 0;
+const T = {swing:1.1, roll:1.9, wobble:2.3, fall:.55, strike:1.7};
+function go(p){ phase = p; t0 = performance.now(); }
+const since = () => (performance.now() - t0)/1000;
+
+/* ---- sound (made with code, no files needed) ---- */
+let ac;
+function noise(dur, freq, q, vol, type='bandpass'){
+  if(!ac) return; const b = ac.createBuffer(1, ac.sampleRate*dur, ac.sampleRate), d = b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 2);
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = b; f.type = type; f.frequency.value = freq; f.Q.value = q; g.gain.value = vol;
+  s.connect(f).connect(g).connect(ac.destination); s.start();
+}
+function tone(freq, dur, vol){ if(!ac) return; const o = ac.createOscillator(), g = ac.createGain();
+  o.type='sawtooth'; o.frequency.value=freq; g.gain.setValueAtTime(vol, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001, ac.currentTime+dur); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+dur); }
+
+/* ---- start the throw ---- */
+function bowl(){
+  if (phase !== 'ready') return;
+  try { ac = ac || new (window.AudioContext||window.webkitAudioContext)(); } catch(e){}
+  document.body.classList.add('rolling'); go('swing');
+}
+document.getElementById('prompt').onclick = bowl;
+cv.addEventListener('click', bowl);
+addEventListener('keydown', e => { if (e.code==='Space') bowl(); });
+setTimeout(bowl, 3200); // auto-bowl if nobody taps
+
+function reveal(){ document.body.classList.add('revealed'); phase = 'idle'; rackPins(); cam.x = 0; }
+document.getElementById('skip').onclick = reveal;
+document.getElementById('replay').onclick = () => {
+  scrollTo({top:0}); document.body.classList.remove('revealed','rolling');
+  rackPins(); Object.assign(ball, {x:.55, z:2, trail:[]}); cam.z = 0; cam.x = 0; xDraw = 0; go('ready'); setTimeout(bowl, 900);
+};
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) reveal();
+
+/* =========================== DRAWING =========================== */
+function line(a, b, color, w, glow){ if(!a||!b) return; ctx.strokeStyle=color; ctx.lineWidth=w; ctx.shadowColor=color; ctx.shadowBlur=glow||0;
+  ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); ctx.shadowBlur=0; }
+function quad(pts, fill){ if(pts.some(p=>!p)) return; ctx.fillStyle=fill; ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.fill(); }
+const nearZ = () => cam.z - ZC + .5;
+
+function drawWorld(time){
+  // sky + far glow
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#01030a'); g.addColorStop(.38,'#061533'); g.addColorStop(.39,'#020611'); g.addColorStop(1,'#000208');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  const hg = ctx.createRadialGradient(W/2,HOR(),0,W/2,HOR(),W*.6);
+  hg.addColorStop(0,'rgba(0,229,255,.22)'); hg.addColorStop(1,'rgba(0,229,255,0)');
+  ctx.fillStyle = hg; ctx.fillRect(0,0,W,H);
+
+  // Tron floor grid
+  const nz = nearZ();
+  for (let x=-40; x<=40; x+=2.5) line(proj(x,0,nz), proj(x,0,cam.z+220), 'rgba(0,140,255,.18)', 1);
+  for (let z=Math.ceil(nz/3)*3; z<cam.z+160; z+=3){ const a = clamp(1-(z-cam.z)/160,0,1)*.25;
+    line(proj(-40,0,z), proj(40,0,z), `rgba(0,140,255,${a})`, 1); }
+
+  // lanes: neighbors dim, ours bright
+  [-12,-6,6,12,0].forEach(off => drawLane(off, off===0 ? 1 : .35, time));
+}
+
+function drawLane(off, a, time){
+  const nz = nearZ(), endZ = PIN_Z + 4;
+  // gutters + lane boards
+  quad([proj(off-2.4,0,nz),proj(off+2.4,0,nz),proj(off+2.4,0,endZ),proj(off-2.4,0,endZ)], `rgba(2,8,22,${a})`);
+  const lg = ctx.createLinearGradient(0,HOR(),0,H);
+  lg.addColorStop(0,`rgba(0,90,200,${.35*a})`); lg.addColorStop(1,`rgba(0,40,110,${.55*a})`);
+  quad([proj(off-1.75,0,nz),proj(off+1.75,0,nz),proj(off+1.75,0,endZ),proj(off-1.75,0,endZ)], lg);
+  // board lines
+  for (let b=-1.5; b<=1.5; b+=.5) line(proj(off+b,0,nz), proj(off+b,0,endZ), `rgba(120,200,255,${.07*a})`, 1);
+  // neon edges (pulse)
+  const p = .75 + .25*Math.sin(time*2 + off);
+  [-1.75,1.75].forEach(x => line(proj(off+x,0,nz), proj(off+x,0,endZ), `rgba(0,229,255,${a*p})`, 2.2, 18));
+  [-2.4,2.4].forEach(x => line(proj(off+x,0,nz), proj(off+x,0,endZ), `rgba(0,71,255,${a*.8})`, 1.4, 10));
+  // foul line
+  line(proj(off-1.75,0,0), proj(off+1.75,0,0), `rgba(255,45,85,${a})`, 2, 14);
+  // target arrows
+  for (let i=-3;i<=3;i++){ const x=off+i*.38, z=15+Math.abs(i)*.9;
+    quad([proj(x,0,z+.7),proj(x-.12,0,z),proj(x+.12,0,z)], `rgba(0,229,255,${.8*a})`); }
+  // masking unit + logo above the pins
+  const m1 = proj(off-3,3.4,endZ+.5), m2 = proj(off+3,1.7,endZ+.5);
+  if (m1 && m2){
+    ctx.fillStyle = `rgba(3,10,28,${a})`; ctx.fillRect(m1.x, m1.y, m2.x-m1.x, m2.y-m1.y);
+    ctx.strokeStyle = `rgba(0,229,255,${.6*a})`; ctx.lineWidth=1.5; ctx.shadowColor='#00e5ff'; ctx.shadowBlur=12;
+    ctx.strokeRect(m1.x, m1.y, m2.x-m1.x, m2.y-m1.y); ctx.shadowBlur=0;
+    if (off===0){ const c = proj(0,2.55,endZ+.5);
+      ctx.font = `900 ${c.s*.62}px Orbitron, sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillStyle='#f4fbff'; ctx.shadowColor='#00e5ff'; ctx.shadowBlur=20; ctx.fillText('TWISTED PIN', c.x, c.y); ctx.shadowBlur=0; }
+  }
+  // neighbor pins (static)
+  if (off!==0) RACK.forEach(([x,dz]) => drawPin({x:off+x, y:0, z:PIN_Z+dz, rot:0, twist:0, alpha:a}));
+}
+
+/* the pin shape: white body, red neck stripes, neon glow */
+function drawPin(p){
+  const b = proj(p.x, p.y, p.z); if (!b) return; const k = b.s/100;
+  ctx.save(); ctx.globalAlpha = p.alpha ?? 1;
+  // shadow
+  if (p.y < .3){ ctx.fillStyle='rgba(0,229,255,.18)'; ctx.beginPath(); ctx.ellipse(b.x, b.y, 22*k, 6*k, 0, 0, 7); ctx.fill(); }
+  ctx.translate(b.x, b.y); ctx.rotate(p.rot||0);
+  const sx = 1 - .28*Math.abs(Math.sin(p.twist||0)); ctx.scale(k*sx, k);
+  ctx.beginPath(); ctx.moveTo(-9,0);
+  ctx.quadraticCurveTo(-26,-30,-22,-55); ctx.quadraticCurveTo(-18,-75,-9,-88);
+  ctx.quadraticCurveTo(-15,-108,-9,-120); ctx.quadraticCurveTo(0,-130,9,-120);
+  ctx.quadraticCurveTo(15,-108,9,-88); ctx.quadraticCurveTo(18,-75,22,-55);
+  ctx.quadraticCurveTo(26,-30,9,0); ctx.closePath();
+  const pg = ctx.createLinearGradient(-22,0,22,0);
+  pg.addColorStop(0,'#9fd8ff'); pg.addColorStop(.45,'#ffffff'); pg.addColorStop(1,'#7fb6e6');
+  ctx.fillStyle = pg; ctx.shadowColor='#bff4ff'; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
+  // red stripes that slide as the pin twists
+  ctx.fillStyle='#ff2d55'; const sh = 3*Math.cos(p.twist||0);
+  ctx.fillRect(-11+sh,-100,22,4); ctx.fillRect(-12+sh,-94,24,4);
+  ctx.restore();
+}
+
+/* the ball: a glowing orb with a spinning energy ring */
+function drawBall(){
+  ball.trail.forEach((tp,i) => { const p = proj(tp.x,.02,tp.z); if(!p) return;
+    ctx.fillStyle = `rgba(0,229,255,${i/ball.trail.length*.35})`; ctx.beginPath(); ctx.ellipse(p.x,p.y,ball.r*p.s*.9,ball.r*p.s*.25,0,0,7); ctx.fill(); });
+  if (ball.z > PIN_Z+1.2) return; const c = proj(ball.x, ball.r, ball.z); if (!c) return; drawOrb(c.x, c.y, ball.r*c.s);
+}
+function drawOrb(x, y, r){
+  const g = ctx.createRadialGradient(x-r*.35, y-r*.4, r*.05, x, y, r);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(.25,'#7ff3ff'); g.addColorStop(.6,'#0a6cff'); g.addColorStop(1,'#020a3a');
+  ctx.fillStyle = g; ctx.shadowColor='#00e5ff'; ctx.shadowBlur = r*.9;
+  ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(180,250,255,.85)'; ctx.lineWidth=Math.max(1,r*.06);
+  ctx.beginPath(); ctx.ellipse(x,y,r*.92,r*.32,ball.spin,0,7); ctx.stroke();
+  ctx.fillStyle='rgba(2,10,40,.8)'; // finger holes
+  [[-.18,-.3],[.12,-.36],[-.02,-.08]].forEach(([dx,dy]) => { ctx.beginPath(); ctx.arc(x+dx*r*Math.cos(ball.spin), y+dy*r, r*.08,0,7); ctx.fill(); });
+}
+
+/* the big neon X */
+function drawStrikeX(p){
+  const s = Math.min(W,H)*.32, cx = W/2, cy = H*.44;
+  const seg = (x1,y1,x2,y2,t) => { if (t<=0) return; t=Math.min(t,1);
+    const ex = lerp(x1,x2,t), ey = lerp(y1,y2,t);
+    ctx.lineCap='round';
+    ctx.strokeStyle='#ff2d55'; ctx.lineWidth=s*.16; ctx.shadowColor='#ff2d55'; ctx.shadowBlur=60;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(ex,ey); ctx.stroke();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=s*.05; ctx.shadowBlur=20; ctx.shadowColor='#fff';
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(ex,ey); ctx.stroke(); ctx.shadowBlur=0; };
+  seg(cx-s,cy-s,cx+s,cy+s, p*2.6); seg(cx+s,cy-s,cx-s,cy+s, p*2.6-1);
+  if (p > .55){ const a = clamp((p-.55)*3,0,1);
+    ctx.globalAlpha=a; ctx.font=`900 ${s*.42}px Orbitron, sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#fff'; ctx.shadowColor='#ff2d55'; ctx.shadowBlur=40; ctx.fillText('STRIKE', cx, cy+s*1.45); ctx.shadowBlur=0; ctx.globalAlpha=1; }
+}
+
+/* =========================== THE STORY LOOP =========================== */
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(.033, (now-last)/1000); last = now; const time = now/1000, t = since();
+
+  if (phase==='ready' || phase==='idle'){ cam.z = Math.sin(time*.4)*.6; cam.x = Math.sin(time*.3)*.25; }
+
+  if (phase==='swing'){ // ball pulls back, then swings forward
+    if (t > T.swing){ go('roll'); noise(2.2, 90, .7, .9, 'lowpass'); }
+  }
+  if (phase==='roll'){
+    const p = clamp(t/T.roll,0,1), e = p*p*(.4+.6*p) + p*.25; const q = clamp(e/1.25,0,1);
+    ball.z = lerp(2, PIN_Z-.2, q); ball.x = .55 - .45*Math.sin(q*Math.PI*.5) + .15*q*q; ball.spin += dt*14;
+    ball.trail.push({x:ball.x,z:ball.z}); if (ball.trail.length>26) ball.trail.shift();
+    cam.z = lerp(0, 42, ease(q)); cam.x = lerp(0, .2, q);
+    if (p>=1){ go('wobble'); crash(); }
+  }
+  if (phase==='wobble' || phase==='fall' || phase==='strike'){
+    ball.z += dt*6; ball.trail.shift?.();
+    pins.forEach(p => { if (p.id===TWISTER || !p.down) return;
+      p.x+=p.vx*dt; p.y+=p.vy*dt; p.z+=p.vz*dt; p.vy-=26*dt; p.rot+=p.av*dt;
+      if (p.y<0){ p.y=0; p.vy*=-.3; p.vx*=.7; p.vz*=.7; } p.alpha = Math.max(0, p.alpha - dt*.35); });
+  }
+  flash *= .9; shake *= .88;
+  if (phase==='wobble'){ // the twisted pin: it spins, rocks, and refuses to fall... until it does
+    const p = pins[TWISTER-1], k = t/T.wobble;
+    p.twist += dt*(10 - 4*k); p.rot = Math.sin(t*(11+5*k)) * (.06 + .2*k);
+    cam.z = lerp(42, 54, ease(clamp(t/1.2,0,1))); cam.x = lerp(.2, 1.4, ease(clamp(t/1.2,0,1)));
+    if (Math.random()<.04) noise(.06, 3200, 4, .25);
+    if (t > T.wobble){ go('fall'); }
+  }
+  if (phase==='fall'){
+    const p = pins[TWISTER-1], k = clamp(t/T.fall,0,1);
+    p.rot = lerp(p.rot, 1.5, k*k); p.x += dt*.8*k;
+    if (k>=1){ p.down=true; p.alpha=0; noise(.35, 1800, 2, .7); go('strike'); flash=.6; shake=6; tone(220,.9,.08); tone(330,.9,.06); tone(440,1,.05); }
+  }
+  if (phase==='strike'){ xDraw = clamp(t/T.strike,0,1); cam.z = lerp(54,47,ease(xDraw)); cam.x = lerp(1.4,0,ease(xDraw)); if (t > T.strike+.6) reveal(); }
+
+  // ---- draw everything ----
+  ctx.save();
+  if (shake>.3) ctx.translate((Math.random()-.5)*shake, (Math.random()-.5)*shake);
+  drawWorld(time);
+  if (phase!=='swing' && phase!=='ready' && phase!=='idle') drawBall();
+  [...pins].sort((a,b)=>b.z-a.z).forEach(drawPin);
+  if (phase==='ready') drawOrb(W*.66, H*.86, Math.min(W,H)*.075);
+  if (phase==='swing'){ // backswing in your hand: down, back, then forward to the release
+    const k = t/T.swing, back = Math.sin(Math.min(k,.55)/.55*Math.PI/2), fwd = clamp((k-.55)/.45,0,1);
+    const x = W*.66 + W*.06*back - W*.1*fwd*0, y = H*.86 + H*.32*back*(1-fwd) - H*.1*fwd*0;
+    const r = Math.min(W,H)*.075*(1 + .5*back*(1-fwd) - .55*fwd);
+    const rel = proj(.55, .36, 2); const fx = lerp(x, rel?rel.x:x, ease(fwd)), fy = lerp(y, rel?rel.y:y, ease(fwd));
+    ball.spin += dt*6; drawOrb(fx, fy, lerp(r, rel?.36*rel.s:r, ease(fwd)));
+  }
+  if (phase==='strike') drawStrikeX(xDraw);
+  ctx.restore();
+  if (flash>.02){ ctx.fillStyle=`rgba(255,255,255,${flash})`; ctx.fillRect(0,0,W,H); }
+  requestAnimationFrame(frame);
+}
+
+/* the crash: nine pins explode, the 10-pin gets clipped and starts to twist */
+function crash(){
+  flash = .45; shake = 14; noise(.7, 2400, 1.2, 1); noise(.4, 600, 1, .8);
+  pins.forEach(p => { if (p.id===TWISTER) return; p.down = true;
+    p.vx = (p.x - ball.x)*3 + (Math.random()-.5)*4; p.vy = 4 + Math.random()*6; p.vz = 3 + Math.random()*5; p.av = (Math.random()-.5)*14; });
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
