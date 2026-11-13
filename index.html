@@ -39,12 +39,12 @@
   body.done #skip{display:none}
 
   /* the big neon X (built in code so it stays sharp) */
-  #strike{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.4);z-index:4;opacity:0;pointer-events:none;text-align:center;transition:transform .5s cubic-bezier(.2,1.6,.4,1),opacity .3s}
-  #strike svg{width:min(80vw,900px);height:auto;overflow:visible}
+  #strike{position:absolute;left:50%;top:50%;display:flex;flex-direction:column;align-items:center;gap:1vh;transform:translate(-50%,-50%) scale(.4);z-index:4;opacity:0;pointer-events:none;text-align:center;transition:transform .5s cubic-bezier(.2,1.6,.4,1),opacity .3s}
+  #strike svg{width:min(62vw,50vh);height:min(62vw,50vh);overflow:visible;display:block}
   #strike svg path{fill:none;stroke-linecap:round;stroke-dasharray:600;stroke-dashoffset:600}
   #strike .glow{stroke:var(--strike-red);stroke-width:52;filter:drop-shadow(0 0 24px var(--strike-red)) drop-shadow(0 0 60px var(--strike-red))}
   #strike .core{stroke:#fff;stroke-width:16;filter:drop-shadow(0 0 10px #fff)}
-  #strike .word{font-family:Orbitron;font-weight:900;font-size:clamp(40px,8vw,110px);letter-spacing:.25em;color:#fff;text-shadow:0 0 18px var(--strike-red),0 0 40px var(--strike-red);opacity:0;transition:opacity .3s .25s}
+  #strike .word{font-family:Orbitron;font-weight:900;font-size:clamp(36px,min(8vw,11vh),110px);line-height:1;padding:.15em .5em .1em .7em;border-radius:18px;background:radial-gradient(ellipse at center,rgba(3,7,18,.75),rgba(3,7,18,0) 70%);letter-spacing:.25em;color:#fff;text-shadow:0 0 18px var(--strike-red),0 0 40px var(--strike-red);opacity:0;transition:opacity .3s .25s}
   body.x #strike{opacity:1;transform:translate(-50%,-50%) scale(1);animation:slam .55s cubic-bezier(.2,1.4,.35,1) both}
   @keyframes slam{0%{transform:translate(-50%,-50%) scale(2.6);opacity:0}55%{transform:translate(-50%,-50%) scale(.93);opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
   #flash{position:absolute;inset:0;z-index:4;background:#fff;opacity:0;pointer-events:none}
