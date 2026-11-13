@@ -40,14 +40,20 @@
 
   /* the big neon X (built in code so it stays sharp) */
   #strike{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.4);z-index:4;opacity:0;pointer-events:none;text-align:center;transition:transform .5s cubic-bezier(.2,1.6,.4,1),opacity .3s}
-  #strike svg{width:min(42vw,420px);height:auto;overflow:visible}
+  #strike svg{width:min(80vw,900px);height:auto;overflow:visible}
   #strike svg path{fill:none;stroke-linecap:round;stroke-dasharray:600;stroke-dashoffset:600}
-  #strike .glow{stroke:var(--strike-red);stroke-width:46;filter:drop-shadow(0 0 24px var(--strike-red)) drop-shadow(0 0 60px var(--strike-red))}
+  #strike .glow{stroke:var(--strike-red);stroke-width:52;filter:drop-shadow(0 0 24px var(--strike-red)) drop-shadow(0 0 60px var(--strike-red))}
   #strike .core{stroke:#fff;stroke-width:16;filter:drop-shadow(0 0 10px #fff)}
-  #strike .word{font-family:Orbitron;font-weight:900;font-size:clamp(28px,5vw,64px);letter-spacing:.25em;color:#fff;text-shadow:0 0 18px var(--strike-red),0 0 40px var(--strike-red);opacity:0;transition:opacity .4s .5s}
-  body.x #strike{opacity:1;transform:translate(-50%,-50%) scale(1)}
-  body.x #strike path{animation:draw .45s forwards}
-  body.x #strike path.b{animation-delay:.25s}
+  #strike .word{font-family:Orbitron;font-weight:900;font-size:clamp(40px,8vw,110px);letter-spacing:.25em;color:#fff;text-shadow:0 0 18px var(--strike-red),0 0 40px var(--strike-red);opacity:0;transition:opacity .3s .25s}
+  body.x #strike{opacity:1;transform:translate(-50%,-50%) scale(1);animation:slam .55s cubic-bezier(.2,1.4,.35,1) both}
+  @keyframes slam{0%{transform:translate(-50%,-50%) scale(2.6);opacity:0}55%{transform:translate(-50%,-50%) scale(.93);opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
+  #flash{position:absolute;inset:0;z-index:4;background:#fff;opacity:0;pointer-events:none}
+  body.x #flash{animation:flash .6s ease-out}
+  @keyframes flash{0%{opacity:.75}100%{opacity:0}}
+  #cinema.shake{animation:shake .5s}
+  @keyframes shake{10%,50%,90%{transform:translate(-6px,3px)}30%,70%{transform:translate(6px,-3px)}}
+  body.x #strike path{animation:draw .3s forwards}
+  body.x #strike path.b{animation-delay:.12s}
   body.x #strike .word{opacity:1}
   body.small-x #strike{top:16%;transform:translate(-50%,-50%) scale(.38)}
   body.done #strike{opacity:0}
@@ -61,16 +67,16 @@
     letter-spacing:.16em;color:#d3d9e2;text-decoration:none;padding:11px 18px 11px 13px;border-radius:30px;
     background:linear-gradient(180deg,#2a2e36,#16191f);border:1px solid rgba(255,255,255,.09);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 26px -10px var(--glow);white-space:nowrap;opacity:0;
-    transform:translate(var(--fx),var(--fy)) rotate(var(--fr)) scale(.35);transition:opacity .35s var(--d),transform 1.1s cubic-bezier(.15,1.25,.35,1) var(--d)}
+    transition:transform .3s,color .3s,box-shadow .3s}
   .pinbtn::after{content:"";position:absolute;left:14%;right:14%;bottom:-10px;height:12px;border-radius:50%;background:var(--glow);filter:blur(10px);opacity:.75;z-index:-1;transition:opacity .3s,filter .3s}
   .pinbtn svg{width:11px;height:20px;flex:none;opacity:.9}
   .pinbtn.red{--glow:rgba(255,45,85,.6)}
   .pinbtn.white{--glow:rgba(235,245,255,.5)}
   .pinbtn.main{font-size:clamp(11px,1.15vw,15px);color:#fff;padding:14px 24px 14px 16px;border-color:rgba(0,229,255,.35)}
   .pinbtn.main svg{width:13px;height:23px}
-  body.menu .pinbtn{opacity:1;transform:none}
+  body.menu .pinbtn{opacity:1;animation:land 1.3s cubic-bezier(.22,.9,.3,1) var(--d) backwards,float 4.5s ease-in-out calc(var(--d) + 1.4s) infinite}
+  @keyframes land{0%{opacity:0;transform:translate(var(--fx),var(--fy)) rotate(var(--fr)) scale(.3)}68%{opacity:1;transform:translate(0,-16px) rotate(0) scale(1.12)}80%{transform:translate(0,5px) scale(.94)}90%{transform:translate(0,-2px) scale(1.02)}100%{opacity:1;transform:none}}
   /* once landed: a slow hover-float, like they are levitating over the lane */
-  body.done .pinbtn{transition:transform .3s,color .3s,box-shadow .3s;animation:float 4.5s ease-in-out infinite;animation-delay:var(--d)}
   @keyframes float{50%{translate:0 -5px}}
   body.done .pinbtn:hover{transform:translateY(-6px) scale(1.05);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 18px 34px -10px var(--glow)}
   body.done .pinbtn:hover::after{opacity:1;filter:blur(14px)}
@@ -154,6 +160,16 @@
   .yourturn{max-width:1300px}
   .yourturn .frame{position:relative;height:72vh;border-radius:26px;overflow:hidden;border:1px solid rgba(0,229,255,.3);box-shadow:0 0 60px rgba(0,229,255,.18),inset 0 0 0 1px rgba(255,255,255,.04)}
   .yourturn iframe{width:100%;height:100%;border:0;display:block}
+
+  /* ===== 5. SOUND: club track starts on your first tap (browsers block sound before that) ===== */
+  #sound{display:flex;align-items:center;gap:8px;margin-left:26px;background:rgba(3,7,18,.4);border:1px solid rgba(0,229,255,.4);color:var(--lane-blue);
+    font-family:Orbitron;font-size:10px;letter-spacing:.2em;padding:8px 14px;border-radius:30px;cursor:pointer}
+  #sound .eq{display:flex;gap:2px;align-items:flex-end;height:12px}
+  #sound .eq i{width:2px;height:3px;background:var(--lane-blue);box-shadow:0 0 6px var(--lane-blue)}
+  body.playing #sound .eq i{animation:eq .5s ease-in-out infinite alternate}
+  body.playing #sound .eq i:nth-child(2){animation-delay:.15s}body.playing #sound .eq i:nth-child(3){animation-delay:.3s}body.playing #sound .eq i:nth-child(4){animation-delay:.08s}
+  @keyframes eq{to{height:12px}}
+  header .right{display:flex;align-items:center}
 </style>
 </head>
 <body>
@@ -165,7 +181,9 @@
     <svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>
     TWISTED <b>PIN</b>
   </a>
-  <nav><a href="#bowl">Bowl</a><a href="#lanes">Lanes</a><a href="#more">Beyond the Lane</a><a href="#visit">Visit</a></nav>
+  <div class="right"><nav><a href="#bowl">Bowl</a><a href="#lanes">Lanes</a><a href="#more">Beyond the Lane</a><a href="#visit">Visit</a></nav>
+  <button id="sound" aria-label="Turn music on or off"><span class="eq"><i></i><i></i><i></i><i></i></span><span class="lbl">SOUND ON</span></button></div>
+  <audio id="music" src="music.mp3" loop preload="auto"></audio>
 </header>
 
 <!-- ===== THE CINEMA: shot 1 the throw, shot 2 the impact, shot 3 the turn ===== -->
@@ -179,6 +197,7 @@
   </div>
   <canvas id="dust"></canvas>
 
+  <div id="flash"></div>
   <div id="strike">
     <svg viewBox="0 0 300 300"><path class="glow" d="M40 40 L260 260"/><path class="glow b" d="M260 40 L40 260"/><path class="core" d="M40 40 L260 260"/><path class="core b" d="M260 40 L40 260"/></svg>
     <div class="word">STRIKE</div>
@@ -283,8 +302,8 @@
    THE TWISTED PIN EXPERIENCE (cinematic cut)
    Shot 1 throw.mp4 → Shot 2 impact.mp4 → X + menu → Shot 3 turn.mp4
    Timing knobs (seconds):                                   */
-const IMPACT_AT = 2.5;   // when the ball hits the pins inside impact.mp4
-const MENU_AFTER = 0.35; // how fast the pins fly out after the X
+const IMPACT_AT = 1.1;   // when the ball hits the pins inside impact.mp4
+const MENU_AFTER = 0.7;  // the X lands first, then the pins fly
 /* ========================================================= */
 const v1 = document.getElementById('v1'), v2 = document.getElementById('v2'), v3 = document.getElementById('v3');
 const poster = document.querySelector('.poster'), banner = document.querySelector('.banner'), B = document.body;
@@ -308,7 +327,7 @@ v3.addEventListener('ended', finish);
 document.querySelectorAll('.pinbtn').forEach((b,i) => {
   const r = (a,b) => a + Math.random()*(b-a);
   b.style.setProperty('--fx', r(-45,45)+'vw'); b.style.setProperty('--fy', r(-30,10)+'vh');
-  b.style.setProperty('--fr', r(-540,540)+'deg'); b.style.setProperty('--d', (i*0.07)+'s');
+  b.style.setProperty('--fr', r(-540,540)+'deg'); b.style.setProperty('--d', (i*0.22)+'s');
 });
 function strike(){ B.classList.add('x'); setTimeout(() => B.classList.add('menu'), MENU_AFTER*1000); }
 function finish(){ if (!xShown){ xShown = true; strike(); } show(banner); B.classList.add('small-x','menu','done','rolling'); }
@@ -320,7 +339,7 @@ document.getElementById('replay').onclick = () => {
   scrollTo({top:0}); B.classList.remove('x','menu','small-x','done','rolling'); started = false; xShown = false; show(poster); setTimeout(start, 600);
 };
 if (matchMedia('(prefers-reduced-motion: reduce)').matches){ show(poster); finish(); }
-else setTimeout(start, 1800); // auto-play after a beat
+else setTimeout(start, 8000); // tap to bowl (with sound); plays by itself after 8s
 
 /* ===== IMMERSION LAYER ===== */
 const root = document.documentElement, fine = matchMedia('(pointer:fine)').matches;
@@ -364,6 +383,50 @@ document.querySelectorAll('.card').forEach(c => {
     c.style.setProperty('--gx', x*100+'%'); c.style.setProperty('--gy', y*100+'%'); });
   c.addEventListener('mouseleave', () => { c.style.transform = ''; });
 });
+
+
+/* ===== SOUND EFFECTS: whoosh, roll, crash, boom, cheer, button thuds ===== */
+let ac, bufs = {};
+function audioInit(){
+  if (ac) return; try { ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return; }
+  ['crash','cheer'].forEach(n => fetch(n+'.mp3').then(r=>r.arrayBuffer()).then(b=>ac.decodeAudioData(b)).then(d=>bufs[n]=d).catch(()=>{}));
+}
+function noiseBuf(sec){ const b = ac.createBuffer(1, ac.sampleRate*sec, ac.sampleRate), d = b.getChannelData(0); for (let i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b; }
+function sfxWhoosh(vol=.35){ if(!ac) return; const t=ac.currentTime, s=ac.createBufferSource(), f=ac.createBiquadFilter(), g=ac.createGain();
+  s.buffer=noiseBuf(.7); f.type='bandpass'; f.Q.value=1.2; f.frequency.setValueAtTime(400,t); f.frequency.exponentialRampToValueAtTime(3200,t+.35); f.frequency.exponentialRampToValueAtTime(900,t+.6);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.25); g.gain.exponentialRampToValueAtTime(.001,t+.65); s.connect(f).connect(g).connect(ac.destination); s.start(t); }
+function sfxThud(vol=.7, pitch=90){ if(!ac) return; const t=ac.currentTime, o=ac.createOscillator(), g=ac.createGain();
+  o.type='sine'; o.frequency.setValueAtTime(pitch*1.8,t); o.frequency.exponentialRampToValueAtTime(pitch*.5,t+.25);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+.35); o.connect(g).connect(ac.destination); o.start(t); o.stop(t+.4);
+  const s=ac.createBufferSource(), f=ac.createBiquadFilter(), g2=ac.createGain(); s.buffer=noiseBuf(.08); f.type='highpass'; f.frequency.value=2500;
+  g2.gain.setValueAtTime(vol*.35,t); g2.gain.exponentialRampToValueAtTime(.001,t+.07); s.connect(f).connect(g2).connect(ac.destination); s.start(t); }
+function sfxRoll(sec){ if(!ac) return; const t=ac.currentTime, s=ac.createBufferSource(), f=ac.createBiquadFilter(), g=ac.createGain();
+  s.buffer=noiseBuf(sec); f.type='lowpass'; f.frequency.value=180; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.9,t+.4); g.gain.linearRampToValueAtTime(1.2,t+sec-.1); g.gain.linearRampToValueAtTime(0,t+sec);
+  s.connect(f).connect(g).connect(ac.destination); s.start(t); }
+function sfxFile(n, vol=1){ if(!ac || !bufs[n]) return; const s=ac.createBufferSource(), g=ac.createGain(); s.buffer=bufs[n]; g.gain.value=vol; s.connect(g).connect(ac.destination); s.start(); }
+let rolled = false;
+v1.addEventListener('play', () => { rolled = false; sfxWhoosh(.25); });
+v1.addEventListener('timeupdate', () => { if (!rolled && v1.currentTime >= 5.4){ rolled = true; sfxRoll(Math.max(1.5,(v1.duration||10)-5.4+IMPACT_AT)); } });
+v3.addEventListener('play', () => sfxFile('cheer', .9));
+const _strike = strike;
+strike = function(){ sfxFile('crash', 1); sfxThud(1, 60); const c=document.getElementById('cinema'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
+  document.querySelectorAll('.pinbtn').forEach((b,i) => { const d=i*0.22+MENU_AFTER; setTimeout(()=>sfxWhoosh(.18), d*1000); setTimeout(()=>sfxThud(.55, 70+i*6), (d+.88)*1000); });
+  if (!music.paused) fadeTo(.35); setTimeout(()=>{ if (!music.paused) fadeTo(.6); }, 6000);
+  _strike(); };
+
+/* ===== SOUND: the club track ===== */
+const music = document.getElementById('music'), sbtn = document.getElementById('sound'), lbl = sbtn.querySelector('.lbl');
+let wantSound = true, fading;
+function fadeTo(v){ clearInterval(fading); fading = setInterval(() => { const d = v - music.volume; if (Math.abs(d) < .03){ music.volume = v; clearInterval(fading); if (!v) music.pause(); } else music.volume += d*.15; }, 40); }
+function soundOn(){ music.volume = 0; const p = music.play(); if (p) p.then(() => { fadeTo(.6); B.classList.add('playing'); lbl.textContent = 'SOUND OFF'; }).catch(()=>{}); }
+function soundOff(){ fadeTo(0); B.classList.remove('playing'); lbl.textContent = 'SOUND ON'; }
+sbtn.addEventListener('click', e => { e.stopPropagation(); wantSound = !B.classList.contains('playing'); wantSound ? soundOn() : soundOff(); });
+['pointerdown','keydown','touchstart'].forEach(ev => addEventListener(ev, function first(e){
+  if (e.target.closest && e.target.closest('#sound')) return;
+  audioInit(); if (ac && ac.state==='suspended') ac.resume();
+  if (wantSound && music.paused) soundOn();
+  removeEventListener(ev, first);
+}, {once:false}));
 </script>
 </body>
 </html>
