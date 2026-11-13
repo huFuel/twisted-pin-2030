@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twisted Pin 2030 | Bowling From The Future</title>
+<meta name="description" content="Concept redesign of the Twisted Pin bowling experience in Plainfield, IL.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  /* ===== 1. BRAND COLORS: change these and the whole site changes ===== */
+  :root{
+    --lane-blue:#00e5ff;
+    --deep-blue:#0047ff;
+    --strike-red:#ff2d55;
+    --pin-white:#f4fbff;
+    --night:#030712;
+    --glass:rgba(8,20,45,.55);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--night);color:var(--pin-white);font-family:Poppins,system-ui,sans-serif}
+
+  /* ===== 2. THE CINEMA: three Higgsfield clips play in order ===== */
+  #cinema{position:relative;height:100vh;overflow:hidden;background:#000}
+  #cinema video,#cinema .poster,#cinema .banner{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s}
+  #cinema video.on,#cinema .poster.on,#cinema .banner.on{opacity:1}
+  #cinema .banner{transition:opacity 1.4s}
+  #cinema .banner.on{animation:drift 14s ease-out forwards}
+  @keyframes drift{from{transform:scale(1.08)}to{transform:scale(1)}}
+  #cinema::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,7,18,.35),rgba(3,7,18,0) 30%,rgba(3,7,18,0) 70%,rgba(3,7,18,.9));pointer-events:none}
+
+  #prompt{position:absolute;left:50%;bottom:9vh;transform:translateX(-50%);z-index:6;font-family:Orbitron;letter-spacing:.35em;
+    font-size:clamp(12px,1.6vw,16px);color:var(--lane-blue);text-shadow:0 0 12px var(--lane-blue);animation:pulse 1.4s infinite;cursor:pointer;background:none;border:none}
+  @keyframes pulse{50%{opacity:.35}}
+  body.rolling #prompt{display:none}
+  #skip{position:absolute;right:22px;top:88px;z-index:7;background:rgba(3,7,18,.4);border:1px solid rgba(0,229,255,.4);color:var(--lane-blue);
+    font-family:Orbitron;font-size:11px;letter-spacing:.2em;padding:8px 14px;border-radius:30px;cursor:pointer}
+  body.done #skip{display:none}
+
+  /* the big neon X (built in code so it stays sharp) */
+  #strike{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.4);z-index:4;opacity:0;pointer-events:none;text-align:center;transition:transform .5s cubic-bezier(.2,1.6,.4,1),opacity .3s}
+  #strike svg{width:min(42vw,420px);height:auto;overflow:visible}
+  #strike svg path{fill:none;stroke-linecap:round;stroke-dasharray:600;stroke-dashoffset:600}
+  #strike .glow{stroke:var(--strike-red);stroke-width:46;filter:drop-shadow(0 0 24px var(--strike-red)) drop-shadow(0 0 60px var(--strike-red))}
+  #strike .core{stroke:#fff;stroke-width:16;filter:drop-shadow(0 0 10px #fff)}
+  #strike .word{font-family:Orbitron;font-weight:900;font-size:clamp(28px,5vw,64px);letter-spacing:.25em;color:#fff;text-shadow:0 0 18px var(--strike-red),0 0 40px var(--strike-red);opacity:0;transition:opacity .4s .5s}
+  body.x #strike{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  body.x #strike path{animation:draw .45s forwards}
+  body.x #strike path.b{animation-delay:.25s}
+  body.x #strike .word{opacity:1}
+  body.small-x #strike{top:16%;transform:translate(-50%,-50%) scale(.38)}
+  body.done #strike{opacity:0}
+  @keyframes draw{to{stroke-dashoffset:0}}
+
+  /* menu cards that pop out of the flying pins */
+  .pop{position:absolute;z-index:5;display:flex;flex-direction:column;gap:14px;top:50%;transform:translateY(-50%)}
+  .pop.left{left:4vw}.pop.right{right:4vw;align-items:flex-end}
+  .pop a{font-family:Orbitron;font-size:clamp(12px,1.2vw,15px);letter-spacing:.18em;color:var(--pin-white);text-decoration:none;
+    padding:14px 22px;border-radius:14px;background:rgba(3,10,30,.55);backdrop-filter:blur(10px);border:1px solid rgba(0,229,255,.5);
+    box-shadow:0 0 22px rgba(0,229,255,.35);opacity:0;transform:translateX(var(--from)) scale(.8);transition:opacity .5s,transform .6s cubic-bezier(.2,1.4,.4,1)}
+  .pop.left a{--from:-60px}.pop.right a{--from:60px}
+  .pop a:hover{border-color:var(--strike-red);box-shadow:0 0 26px rgba(255,45,85,.5)}
+  body.menu .pop a{opacity:1;transform:none}
+  body.menu .pop a:nth-child(2){transition-delay:.15s}
+  body.menu .pop a:nth-child(3){transition-delay:.3s}
+
+  .headline{position:absolute;left:0;right:0;bottom:12vh;z-index:5;text-align:center;opacity:0;transform:translateY(20px);transition:opacity 1s,transform 1s}
+  body.done .headline{opacity:1;transform:none}
+  .headline h1{font-family:Orbitron;font-weight:900;font-size:clamp(30px,5.5vw,76px);line-height:1;text-shadow:0 4px 30px rgba(0,0,0,.6)}
+  .headline h1 .x{color:var(--strike-red);text-shadow:0 0 18px var(--strike-red)}
+  .headline .row{justify-content:center;margin-top:24px}
+
+  header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:18px 5vw;
+    background:linear-gradient(180deg,rgba(3,7,18,.7),rgba(3,7,18,0));z-index:10}
+  .logo{display:flex;align-items:center;gap:10px;font-family:Orbitron;font-weight:900;letter-spacing:.12em;font-size:18px;text-decoration:none;color:var(--pin-white)}
+  .logo svg{width:22px;height:34px;transform-origin:50% 100%;animation:wobble 3.2s ease-in-out infinite}
+  .logo b{color:var(--lane-blue);text-shadow:0 0 10px var(--lane-blue)}
+  @keyframes wobble{0%,60%,100%{transform:rotate(0)}66%{transform:rotate(-14deg)}72%{transform:rotate(11deg)}78%{transform:rotate(-7deg)}84%{transform:rotate(4deg)}90%{transform:rotate(-2deg)}}
+  nav a{color:var(--pin-white);opacity:.85;text-decoration:none;margin-left:26px;font-size:14px}
+  nav a:hover{opacity:1;color:var(--lane-blue)}
+  .btn{display:inline-block;font-family:Orbitron;font-size:13px;letter-spacing:.15em;padding:14px 26px;border-radius:40px;text-decoration:none;
+    color:var(--night);background:var(--lane-blue);box-shadow:0 0 24px rgba(0,229,255,.6);transition:transform .2s}
+  .btn:hover{transform:translateY(-2px) scale(1.03)}
+  .btn.ghost{background:rgba(3,7,18,.4);color:var(--pin-white);border:1px solid rgba(255,255,255,.4);box-shadow:none}
+
+  /* ===== 3. THE SITE ===== */
+  main{position:relative;background:radial-gradient(ellipse at top,#071a3a,var(--night) 60%)}
+  section{padding:110px 6vw;max-width:1200px;margin:0 auto}
+  .eyebrow{font-family:Orbitron;letter-spacing:.4em;font-size:12px;color:var(--lane-blue);margin-bottom:18px}
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  h2{font-family:Orbitron;font-size:clamp(28px,4vw,48px);margin-bottom:14px}
+  h2 em{font-style:normal;color:var(--lane-blue)}
+  .sub{opacity:.75;max-width:640px;margin-bottom:46px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+  .card{background:var(--glass);border:1px solid rgba(0,229,255,.18);border-radius:22px;padding:30px 26px;backdrop-filter:blur(10px);transition:transform .3s,border-color .3s,box-shadow .3s}
+  .card:hover{transform:translateY(-6px);border-color:var(--lane-blue);box-shadow:0 0 40px rgba(0,229,255,.25)}
+  .card .ico{font-size:30px;margin-bottom:14px}
+  .card h3{font-family:Orbitron;font-size:17px;letter-spacing:.06em;margin-bottom:10px}
+  .card p{font-size:14px;opacity:.78;line-height:1.6}
+  .card.red{border-color:rgba(255,45,85,.35)}
+  .card.red:hover{border-color:var(--strike-red);box-shadow:0 0 40px rgba(255,45,85,.3)}
+  .visit{display:grid;grid-template-columns:1.2fr 1fr;gap:30px;align-items:center}
+  .visit .card{padding:40px}
+  .big{font-family:Orbitron;font-size:clamp(22px,3vw,34px);line-height:1.3}
+  footer{text-align:center;padding:60px 6vw 80px;opacity:.65;font-size:13px}
+  footer .tag{font-family:Orbitron;font-size:26px;color:var(--lane-blue);opacity:1;margin-bottom:14px;text-shadow:0 0 14px var(--lane-blue)}
+  #replay{background:none;border:none;color:var(--strike-red);font-family:Orbitron;letter-spacing:.2em;cursor:pointer;margin-top:18px;font-size:12px}
+  @media(max-width:760px){nav{display:none}.visit{grid-template-columns:1fr}.pop{top:auto;bottom:22vh;transform:none}.pop a{padding:10px 14px}}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#cinema">
+    <svg viewBox="0 0 40 64"><path d="M20 2c5 0 7 4 6 10-1 4-3 6-3 9 0 4 9 11 9 24 0 9-4 15-5 17H13c-1-2-5-8-5-17 0-13 9-20 9-24 0-3-2-5-3-9-1-6 1-10 6-10z" fill="#f4fbff"/><rect x="13.5" y="17" width="13" height="2.6" fill="#ff2d55"/><rect x="13" y="21.5" width="14" height="2.6" fill="#ff2d55"/></svg>
+    TWISTED <b>PIN</b>
+  </a>
+  <nav><a href="#bowl">Bowl</a><a href="#lanes">Lanes</a><a href="#more">Beyond the Lane</a><a href="#visit">Visit</a></nav>
+</header>
+
+<!-- ===== THE CINEMA: shot 1 the throw, shot 2 the impact, shot 3 the turn ===== -->
+<section id="cinema" style="padding:0;max-width:none">
+  <img class="poster on" src="poster.jpg" alt="A bowler in a glowing techwear suit on a neon lane while his friends watch">
+  <img class="banner" src="banner.jpg" alt="The Twisted Pin lounge with TWISTED PIN glowing on the giant screen wall">
+  <video id="v1" src="throw.mp4" muted playsinline preload="auto"></video>
+  <video id="v2" src="impact.mp4" muted playsinline preload="auto"></video>
+  <video id="v3" src="turn.mp4" muted playsinline preload="auto"></video>
+
+  <div id="strike">
+    <svg viewBox="0 0 300 300"><path class="glow" d="M40 40 L260 260"/><path class="glow b" d="M260 40 L40 260"/><path class="core" d="M40 40 L260 260"/><path class="core b" d="M260 40 L40 260"/></svg>
+    <div class="word">STRIKE</div>
+  </div>
+
+  <div class="pop left"><a href="#bowl">🎳 BOWL</a><a href="#bowl">🏆 LEAGUES</a><a href="#bowl">💎 VIP SUITE</a></div>
+  <div class="pop right"><a href="#bowl">🎉 PARTIES</a><a href="#more">🍔 EAT + DRINK</a><a href="#visit">📍 VISIT</a></div>
+
+  <div class="headline">
+    <h1>BOWLING FROM THE <span class="x">FUTURE</span></h1>
+    <div class="row"><a class="btn" href="https://www.twistedpin.com/" target="_blank" rel="noopener">BOOK A LANE</a><a class="btn ghost" href="tel:+18157827790">CALL (815) 782-7790</a></div>
+  </div>
+
+  <button id="prompt">TAP TO BOWL</button>
+  <button id="skip">SKIP INTRO</button>
+</section>
+
+<main>
+  <section id="bowl">
+    <div class="eyebrow">BOWLING FIRST</div>
+    <h2>Step onto the <em>lane</em></h2>
+    <p class="sub">This is a bowling house before it's anything else. Pick how you want to roll.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">🎳</div><h3>OPEN BOWLING</h3><p>Bowling is booked by time, not by game. Grab a lane, grab your crew, and play as many frames as the clock gives you.</p></div>
+      <div class="card"><div class="ico">🏆</div><h3>LEAGUES</h3><p>Weeknight leagues for the regulars, the rookies, and everybody chasing a 300. Ask about the next season.</p></div>
+      <div class="card"><div class="ico">💎</div><h3>VIP SUITE</h3><p>Six private lanes for your people only. Large groups reserve ahead.</p></div>
+      <div class="card"><div class="ico">🎉</div><h3>PARTIES + EVENTS</h3><p>Birthdays, team nights, celebrations. We set up the lanes, you bring the noise.</p></div>
+    </div>
+  </section>
+
+  <section id="lanes">
+    <div class="eyebrow">THE 2030 LANE</div>
+    <h2>Every roll <em>lights up</em></h2>
+    <p class="sub">Glowing lanes, a ball that leaves a trail, and pins that hit the deck like a light show.</p>
+    <div class="grid">
+      <div class="card red"><div class="ico">✖️</div><h3>STRIKE MOMENTS</h3><p>Every strike gets its moment on the screens. You'll feel it from the approach.</p></div>
+      <div class="card"><div class="ico">🌌</div><h3>COSMIC NIGHTS</h3><p>Lights down, neon up. The whole house turns into a grid.</p></div>
+      <div class="card"><div class="ico">👟</div><h3>NEW TO BOWLING?</h3><p>Bumpers, light balls, and staff who will show you where to stand. Everybody bowls here.</p></div>
+    </div>
+  </section>
+
+  <section id="more">
+    <div class="eyebrow">BEYOND THE LANE</div>
+    <h2>Between <em>frames</em></h2>
+    <p class="sub">When it's not your turn, there's still plenty going on.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">🕹️</div><h3>ARCADE</h3><p>Games, prizes, and a little friendly competition off the lane.</p></div>
+      <div class="card"><div class="ico">🍔</div><h3>FOOD</h3><p>A real kitchen. Eat at the lane so you never miss a frame.</p></div>
+      <div class="card"><div class="ico">🍹</div><h3>CRAFT COCKTAILS</h3><p>A full bar for the grown folks.</p></div>
+      <div class="card"><div class="ico">🍺</div><h3>SELF-POUR WALL</h3><p>A self-serve tap wall of beer and wine. Pour what you want, pay for what you pour.</p></div>
+    </div>
+  </section>
+
+  <section id="visit">
+    <div class="visit">
+      <div>
+        <div class="eyebrow">COME BOWL</div>
+        <p class="big">15610 S. Joliet Road<br>Plainfield, IL 60544</p>
+        <p class="sub" style="margin-top:16px">Minutes from Joliet. Lanes are waiting.</p>
+        <div class="row">
+          <a class="btn" href="https://maps.google.com/?q=15610+S+Joliet+Rd+Plainfield+IL+60544" target="_blank" rel="noopener">GET DIRECTIONS</a>
+          <a class="btn ghost" href="https://www.twistedpin.com/" target="_blank" rel="noopener">HOURS + PRICING</a>
+        </div>
+      </div>
+      <div class="card"><p class="eyebrow">#GETTWISTED</p><p class="big">Roll up.<br>Knock 'em down.<br><span style="color:var(--strike-red)">Leave with an X.</span></p></div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="tag">#GETTWISTED</div>
+    Concept redesign by Dice Gamble for The Open Experience. Not the official Twisted Pin website.<br>
+    <button id="replay">↻ THROW IT AGAIN</button>
+  </footer>
+</main>
+
+<script>
+/* =========================================================
+   THE TWISTED PIN EXPERIENCE (cinematic cut)
+   Shot 1 throw.mp4 → Shot 2 impact.mp4 → X + menu → Shot 3 turn.mp4
+   Timing knobs (seconds):                                   */
+const IMPACT_AT = 2.5;   // when the ball hits the pins inside impact.mp4
+const MENU_AFTER = 0.9;  // how long after the X the menu pops out
+/* ========================================================= */
+const v1 = document.getElementById('v1'), v2 = document.getElementById('v2'), v3 = document.getElementById('v3');
+const poster = document.querySelector('.poster'), banner = document.querySelector('.banner'), B = document.body;
+let started = false, xShown = false;
+
+function show(v){ [poster,banner,v1,v2,v3].forEach(el => el.classList.toggle('on', el===v)); }
+function play(v){ show(v); v.currentTime = 0; const p = v.play(); if (p) p.catch(finish); }
+
+function start(){
+  if (started || B.classList.contains('done')) return; started = true; B.classList.add('rolling'); play(v1);
+}
+v1.addEventListener('ended', () => play(v2));
+v2.addEventListener('timeupdate', () => {
+  if (!xShown && v2.currentTime >= IMPACT_AT){ xShown = true; strike(); }
+});
+v2.addEventListener('ended', () => { B.classList.add('small-x'); play(v3); });
+v3.addEventListener('ended', finish);
+[v1,v2,v3].forEach(v => v.addEventListener('error', finish));
+
+function strike(){ B.classList.add('x'); setTimeout(() => B.classList.add('menu'), MENU_AFTER*1000); }
+function finish(){ if (!xShown){ xShown = true; strike(); } show(banner); B.classList.add('small-x','menu','done','rolling'); }
+
+document.getElementById('prompt').onclick = start;
+document.getElementById('cinema').addEventListener('click', e => { if (!e.target.closest('a,button')) start(); });
+document.getElementById('skip').onclick = () => { [v1,v2,v3].forEach(v=>v.pause()); finish(); };
+document.getElementById('replay').onclick = () => {
+  scrollTo({top:0}); B.classList.remove('x','menu','small-x','done','rolling'); started = false; xShown = false; show(poster); setTimeout(start, 600);
+};
+if (matchMedia('(prefers-reduced-motion: reduce)').matches){ show(poster); finish(); }
+else setTimeout(start, 1800); // auto-play after a beat
+</script>
+</body>
+</html>
